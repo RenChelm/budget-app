@@ -1,8 +1,17 @@
 from kivy.app import App
 from kivy.uix.label import Label
+from kivy.uix.button import Button
+from kivy.uix.boxlayout import BoxLayout
 
-class MyApp(App):
+class budgApp(App):
+
     def build(self):
-        return Label(text="Kivy is working!")
 
-MyApp().run()
+        layout = BoxLayout(orientation = "vertical")
+
+        layout.add_widget(Label(text = "Hello"))
+        layout.add_widget(Button(text = "Click Me"))
+
+        return layout
+
+budgApp().run()
