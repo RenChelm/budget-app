@@ -24,85 +24,105 @@ from kivy.properties import NumericProperty
 
 from datetime import datetime
 
-class EntryRow(BoxLayout):
-    text = StringProperty("") 
-    bg_color = (0.30, 0.45, 0.32, 1)
+class EntryRow(FloatLayout):
+    timestamp_text = StringProperty("")
+    category_text = StringProperty("")
+    amount_text = StringProperty("")
     index = NumericProperty(0)
+
+    bg_color = (0.30, 0.45, 0.32, 1)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.orientation = "horizontal"
         self.size_hint_y = None
-        self.height = 50
-        self.padding = [10, 10]
-        self.spacing = 60
+        self.height = 70
 
         with self.canvas.before:
             Color(*self.bg_color)
             self.bg_rect = RoundedRectangle(
                 radius=[10], 
-                pos=(self.x + 5, self.y + 5), 
-                size=(self.width - 2, self.height - 2)
+                pos=self.pos, 
+                size=self.size
             )
 
         self.bind(pos=self.update_rect, size=self.update_rect)
 
-        # Left label (timestamp + category) #
-        self.left_label = Label(
+        ## TIMESTAMP (TOP-LEFT) ##
+
+        self.timestamp_label = Label(
             text="",
+            size_hint=(None, None),
+            size=(180, 30),
+            pos_hint={"x": 0.00, "y": 0.60},
             halign="left",
-            valign="middle",
-            size_hint_x=0.7
+            valign="middle"
         )
-        self.left_label.bind(size=lambda inst, val: setattr(inst, "text_size", (inst.width, None)))
+        self.timestamp_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
+        self.bind(timestamp_text=self.timestamp_label.setter("text"))
 
-        # Right label (amount) #
-        self.right_label = Label(
+        ## CATEGORY (BOTTOM-LEFT) ##
+
+        self.category_label = Label(
             text="",
-            halign="right",
-            valign="middle",
-            size_hint_x=0.3,
+            size_hint=(None, None),
+            size=(180, 30),
+            pos_hint={"x": 0.00, "y": 0.20},
+            halign="left",
+            valign="middle"
         )
-        self.right_label.bind(size=lambda inst, val: setattr(inst, "text_size", (inst.width, None)))
+        self.category_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
+        self.bind(category_text=self.category_label.setter("text"))
 
-        self.delete_btn = Button(
-            text="X",
-            size_hint_x=None,
-            width=40,
-            background_normal="",
-            background_color=(0.8, 0.3, 0.3, 1),
-            color=(1, 1, 1, 1)
+        ## AMOUNT (TOP-RIGHT) ##
+
+        self.amount_label = Label(
+            text="",
+            size_hint=(None, None),
+            size=(100, 30),
+            pos_hint={"right": 0.95, "y": 0.60},
+            halign="right",
+            valign="middle"
         )
-        self.delete_btn.bind(on_release=self.on_delete_pressed)
+        self.amount_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
+        self.bind(amount_text=self.amount_label.setter("text"))
+
+        ## EDIT BUTTON (BOTTON-RIGHT) ##
 
         self.edit_btn = Button(
             text="Edit",
-            size_hint_x=None,
-            width=60,
+            size_hint=(None, None),
+            size=(60, 30),
+            pos_hint={"right": 0.95, "y": 0.20},
             background_normal="",
             background_color=(0.3, 0.5, 0.8, 1),
             color=(1, 1, 1, 1)
         )
         self.edit_btn.bind(on_release=self.on_edit_pressed)
+
+        ## DELETE BUTTON (FAR RIGHT) ##
+
+        self.delete_btn = Button(
+            text="X",
+            size_hint=(None, None),
+            size=(40, 30),
+            pos_hint={"right": 0.80, "y": 0.20},
+            background_normal="",
+            background_color=(0.8, 0.3, 0.3, 1),
+            color=(1, 1, 1, 1)
+        )
+        self.delete_btn.bind(on_release=self.on_delete_pressed)
         
-        self.add_widget(self.left_label)
-        self.add_widget(self.right_label)
-        self.add_widget(self.delete_btn)
+        #self.add_widget(self.left_label)
+        #self.add_widget(self.right_label)
+        self.add_widget(self.timestamp_label)
+        self.add_widget(self.category_label)
+        self.add_widget(self.amount_label)
         self.add_widget(self.edit_btn)
+        self.add_widget(self.delete_btn)
 
     def update_rect(self, *args):
         self.bg_rect.pos = (self.x + 5, self.y + 5)
         self.bg_rect.size = (self.width - 2, self.height - 2)
-
-    def on_text(self, instance, value):
-        # Split the text into left/right parts #
-        try:
-            left, right = value.split("||")
-        except ValueError:
-            left, right = value, ""
-
-        self.left_label.text = left
-        self.right_label.text = right
 
     def on_delete_pressed(self, instance):
         App.get_running_app().delete_entry(self.index)
@@ -111,19 +131,18 @@ class EntryRow(BoxLayout):
         app = App.get_running_app()
         app.open_edit_window(self.index)
 
-
 class BudgetApp(App):
     def build(self):
 
         self.saved_amounts = []
 
         # Load saved entries from file #
-
         try:
             with open("data.json", "r") as f:
                 content = f.read().strip()
                 if content:
                     self.saved_amounts = json.loads(content)
+
                     # Convert timestamp strings back to datetime objects #
                     for entry in self.saved_amounts:
                         if isinstance(entry.get("timestamp"), str):
@@ -169,8 +188,8 @@ class BudgetApp(App):
         main = FloatLayout()
 
         self.rv = RecycleView(
-            size_hint=(1, 0.75),
-            pos_hint={"center_x": 0.5, "center_y": 0.6}
+            size_hint=(1, 0.7),
+            pos_hint={"center_y": 0.64}
         )   
 
         layout = RecycleBoxLayout(
@@ -276,9 +295,11 @@ class BudgetApp(App):
 
     def select_category(self, category):
         if hasattr(self, "editing_category_btn"):
-            self.editing
-        self.selected_category = category
-        self.category_btn.text = f"{category}"
+            self.editing_category_btn.text = category
+            del self.editing_category_btn
+            del self.editing_index
+        else:
+            self.category_btn.text = category
         
         self.category_popup.dismiss()
         
@@ -340,12 +361,18 @@ class BudgetApp(App):
         category_btn.bind(on_release=lambda inst: self.open_category_window_for_edit(index, category_btn))
 
         save_btn = Button(text="Save", size_hint_y=None, height=40)
-        save_btn.bind(on_release=lambda inst: self.save_edit(index, amount_input.text))
+        save_btn.bind(
+            on_release=lambda inst: self.save_edit(
+                index, 
+                amount_input.text,
+                category_btn.text
+            )
+        )
 
         layout.add_widget(Label(text="Edit Amount:"))
         layout.add_widget(amount_input)
         layout.add_widget(Label(text="Edit Category:"))
-        layout.add_widget(self.category_btn)
+        layout.add_widget(category_btn)
         layout.add_widget(save_btn)
 
         self.edit_window = Popup(
@@ -385,7 +412,13 @@ class BudgetApp(App):
         self.editing_index = index
         self.editing_category_btn = category_btn
         self.open_category_window()
-        
+
+    '''
+    def select_category_for_edit(self, category, category_btn):
+        category_btn.text = category
+        self.category_popup.dismiss()
+    '''
+
     ## ERROR POPUP - METHOD ##
 
     def show_error(self, message):
@@ -400,7 +433,12 @@ class BudgetApp(App):
 
     def update_display(self):
         if not self.saved_amounts:
-            self.rv.data = [{"text": "No entries yet ||"}]
+            self.rv.data = [{
+                "timestamp_text": "No entries yet.",
+                "category_text": "",
+                "amount_text": "",
+                "index": -1
+            }]
             return
             
         sorted_entries = sorted(self.saved_amounts, key=lambda x: x["timestamp"], reverse=True)
@@ -413,11 +451,10 @@ class BudgetApp(App):
             category = sorted_entry["category"] or "Uncategorized"
             amount = f"${sorted_entry['amount']:.2f}"
 
-            left = f"{t}\n{category}"
-            right = amount
-
             rows.append({
-                "text": f"{left}||{right}",
+                "timestamp_text": t,
+                "category_text": category,
+                "amount_text": amount,
                 "index": original_index
             })
 
@@ -430,6 +467,5 @@ class BudgetApp(App):
         self.top_rect.size = instance.size
 
         top_bar.bind(pos=update_rect, size=update_rect)
-
 
 BudgetApp().run()
