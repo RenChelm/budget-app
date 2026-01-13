@@ -111,9 +111,7 @@ class EntryRow(FloatLayout):
             color=(1, 1, 1, 1)
         )
         self.delete_btn.bind(on_release=self.on_delete_pressed)
-        
-        #self.add_widget(self.left_label)
-        #self.add_widget(self.right_label)
+    
         self.add_widget(self.timestamp_label)
         self.add_widget(self.category_label)
         self.add_widget(self.amount_label)
@@ -255,18 +253,18 @@ class BudgetApp(App):
             height=40
         )
 
-        save_btn = Button(text="Save", size_hint=(1, 0.3))
-        save_btn.bind(on_release=lambda x: self.save_text())
-
         self.category_btn = Button(text="Select Category", size_hint=(1, 0.3))
         self.category_btn.bind(on_release=lambda x: self.open_category_window())
 
+        save_btn = Button(text="Save", size_hint=(1, 0.3))
+        save_btn.bind(on_release=lambda x: self.save_text())
+
         layout.add_widget(self.input_box)
-        layout.add_widget(save_btn)
         layout.add_widget(self.category_btn)
+        layout.add_widget(save_btn)
 
         self.popup = Popup(
-            title="Enter Amount",
+            title="Add Transaction",
             content=layout,
             size_hint=(0.8, 0.3)
         )
@@ -322,7 +320,6 @@ class BudgetApp(App):
 
         self.saved_amounts.append(entry)
 
-        # Save to file #
         with open("data.json", "w") as f:
             json.dump(self.saved_amounts, f, default=str)
 
@@ -344,23 +341,20 @@ class BudgetApp(App):
 
     def open_edit_window(self, index):
         entry = self.saved_amounts[index]
-
         layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
 
         amount_input = TextInput(
             text=str(entry["amount"]),
             multiline=False,
             input_filter="float",
-        )
-
-        category_btn = Button(
-            text=entry["category"],
             size_hint_y=None,
             height=40
         )
+
+        category_btn = Button(text=entry.get("category") or "Uncategorized", size_hint=(1, 0.3))
         category_btn.bind(on_release=lambda inst: self.open_category_window_for_edit(index, category_btn))
 
-        save_btn = Button(text="Save", size_hint_y=None, height=40)
+        save_btn = Button(text="Save", size_hint=(1, 0.3))
         save_btn.bind(
             on_release=lambda inst: self.save_edit(
                 index, 
@@ -369,16 +363,14 @@ class BudgetApp(App):
             )
         )
 
-        layout.add_widget(Label(text="Edit Amount:"))
         layout.add_widget(amount_input)
-        layout.add_widget(Label(text="Edit Category:"))
         layout.add_widget(category_btn)
         layout.add_widget(save_btn)
 
         self.edit_window = Popup(
-            title="Edit Entry",
+            title="Edit Transaction",
             content=layout,
-            size_hint=(0.8, 0.5)
+            size_hint=(0.8, 0.3)
         )
         self.edit_window.open()
 
@@ -393,17 +385,10 @@ class BudgetApp(App):
         self.saved_amounts[index]["amount"] = new_amount
         self.saved_amounts[index]["category"] = new_category
 
-        # Save to JSON #
-
         with open("data.json", "w") as f:
             json.dump(self.saved_amounts, f, default=str)
 
-        # Refresh UI #
-
         self.update_display()
-
-        # Close window #
-
         self.edit_window.dismiss()  
 
     ## OPEN CATEGORY WINDOW FOR EDIT - METHOD ##
@@ -412,12 +397,6 @@ class BudgetApp(App):
         self.editing_index = index
         self.editing_category_btn = category_btn
         self.open_category_window()
-
-    '''
-    def select_category_for_edit(self, category, category_btn):
-        category_btn.text = category
-        self.category_popup.dismiss()
-    '''
 
     ## ERROR POPUP - METHOD ##
 
