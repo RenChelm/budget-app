@@ -275,7 +275,10 @@ class BudgetApp(App):
     def open_category_window(self):
         layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
 
-        categories = ["Food", "Bills", "Transport", "Fun", "Other"]
+        categories = ["Food", "Bills", "Entertainment", "Subscriptions", 
+                      "Rent","Insurance", "Savings", "Medicine", "Therapy", 
+                      "Credit Card", "Personal Care/Hygiene ", "Other"
+                      ]
 
         for cat in categories:
             btn = Button(text=cat, size_hint_y=None, height=40)
@@ -285,13 +288,15 @@ class BudgetApp(App):
         self.category_popup = Popup(
             title="Select Category",
             content=layout,
-            size_hint=(0.8, 0.5)
+            size_hint=(0.8, 0.84)
         )
         self.category_popup.open()
 
     ## CATEGORY SELECTION - METHOD ##
 
     def select_category(self, category):
+        self.selected_category = category
+        
         if hasattr(self, "editing_category_btn"):
             self.editing_category_btn.text = category
             del self.editing_category_btn
