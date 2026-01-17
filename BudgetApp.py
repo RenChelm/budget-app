@@ -12,6 +12,8 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.textinput import TextInput
+from kivy.uix.widget import Widget
+
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
@@ -183,11 +185,12 @@ class BudgetApp(App):
         root.add_widget(top_bar)
 
         ## MAIN CONTENT AREA ##
+        
         main = FloatLayout()
 
         self.rv = RecycleView(
             size_hint=(1, 0.7),
-            pos_hint={"center_y": 0.64}
+            pos_hint={"center_y": 0.63}
         )   
 
         layout = RecycleBoxLayout(
@@ -206,35 +209,104 @@ class BudgetApp(App):
 
         main.add_widget(self.rv)
 
+        ## BOTTOM DIVIDER ##
+
+        divider_bot = Widget(
+            size_hint=(1, None),
+            height=9,
+            pos_hint={"y": 0.264}
+        )
+        with divider_bot.canvas.before:
+            Color(0.8, 0.8, 0.8, 1)  # Light Gray
+            divider_bot.rect = Rectangle(pos=divider_bot.pos, size=divider_bot.size)
+
+        divider_bot.bind(
+            pos=lambda inst, val: setattr(inst.rect, "pos", inst.pos),
+            size=lambda inst, val: setattr(inst.rect, "size", inst.size)
+        )
+        main.add_widget(divider_bot)
+
+        ## TOP DIVIDER ##
+
+        divider_top = Widget(
+            size_hint=(1, None),
+            height=9,
+            pos_hint={"y": 0.984}
+        )
+        with divider_top.canvas.before:
+            Color(0.8, 0.8, 0.8, 1)  # Light Gray
+            divider_top.rect = Rectangle(pos=divider_top.pos, size=divider_top.size)
+
+        divider_top.bind(
+            pos=lambda inst, val: setattr(inst.rect, "pos", inst.pos),
+            size=lambda inst, val: setattr(inst.rect, "size", inst.size)
+        )
+        main.add_widget(divider_top)
+
+        ## BOTTOM LEFT INFO PANEL ##
+
+        info_panel = BoxLayout(
+            orientation="vertical",
+            size_hint=(0.6, None),
+            height=185,
+            pos_hint={"x": 0.02, "y": 0.005},
+            spacing=5
+        ) 
+
+        self.spent_label = Label(text="Total Spent: $0.00")
+        self.trans_label = Label(text="Total Transactions: 0")
+
+        info_panel.add_widget(self.spent_label)
+        info_panel.add_widget(self.trans_label)
+
+        main.add_widget(info_panel)
+
+        ## BOTTOM RIGHT BUTTON CLUSTER ##
+
+        button_cluster = BoxLayout(
+            orientation="vertical",
+            size_hint=(None, None),
+            width=60,
+            pos_hint={"right": 0.99, "y": 0.005},
+            spacing=3
+        )
+
+        ## ADD BUTTON ##
+
         btn_add = Button(
             text="Add",
+            halign="center",
+            valign="middle",
             background_normal = "",
             background_color = (0.51765, 0.878, 0.737, 1),
             color = (0, 0, 0, 1),
-            halign="center",
-            valign="middle",
-            size_hint=(0.16, 0.12),
-            pos_hint={"right": 0.99, "y": 0.14},
+            size_hint=(1, None),
+            height=91,
             on_release=self.open_transaction_window
         )
 
+        ## VIEW BUDGET BUTTON ##
+
         btn_budget = Button(
             text="View\nBudget",
+            halign="center",
+            valign="middle",
             background_normal = "",
             background_color = (0.51765, 0.878, 0.737, 1),
             color = (0, 0, 0, 1),
-            halign="center",
-            valign="middle",
-            size_hint=(0.16, 0.12),
-            pos_hint={"right": 0.99, "y": 0.01}
+            size_hint=(1, None),
+            height=91
         )
 
-        # Center text properly #
+        # Center text #
         btn_add.text_size = btn_add.size
+        btn_add.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
         btn_budget.text_size = btn_budget.size
+        btn_budget.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
 
-        main.add_widget(btn_add)
-        main.add_widget(btn_budget)
+        button_cluster.add_widget(btn_add)
+        button_cluster.add_widget(btn_budget)
+        main.add_widget(button_cluster)
 
         root.add_widget(main)
         
@@ -277,8 +349,7 @@ class BudgetApp(App):
 
         categories = ["Food", "Bills", "Entertainment", "Subscriptions", 
                       "Rent","Insurance", "Savings", "Medicine", "Therapy", 
-                      "Credit Card", "Personal Care/Hygiene ", "Other"
-                      ]
+                      "Credit Card", "Personal Care/Hygiene", "Other"]
 
         for cat in categories:
             btn = Button(text=cat, size_hint_y=None, height=40)
@@ -443,6 +514,12 @@ class BudgetApp(App):
             })
 
         self.rv.data = rows
+
+        total_spent = sum(entry["amount"] for entry in self.saved_amounts)
+        total_transactions = len(self.saved_amounts)
+
+        self.spent_label.text = f"Total Spent: ${total_spent:.2f}"
+        self.trans_label.text = f"Total Transactions: {total_transactions}"
 
     ## UPDATE TOP BAR RECTANGLE ON RESIZE/MOVE - METHOD ##
 
