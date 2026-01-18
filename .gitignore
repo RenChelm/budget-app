@@ -1,2 +1,39 @@
+# -------------------------
+# Buildozer / Android build
+# -------------------------
 .buildozer/
 bin/
+*.apk
+*.aab
+
+# Python virtual environments
+venv/
+env/
+kivyenv/
+.kivyenv/
+*.pyc
+__pycache__/
+
+# Kivy build artifacts
+*.pyo
+*.pyd
+
+# Logs
+*.log
+
+# OS-specific junk
+.DS_Store
+Thumbs.db
+
+# IDE settings
+.vscode/
+.idea/
+
+# Python packaging
+dist/
+build/
+*.egg-info/
+
+# Temporary files
+*.swp
+*.swo
