@@ -1,4 +1,5 @@
 import json
+import os
 
 from kivy.config import Config
 Config.set('graphics', 'width', '360')

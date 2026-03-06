@@ -44,10 +44,10 @@ requirements = python3==3.10.10, kivy==2.2.1, android, sdl2, pyjnius, kivy_garde
 # requirements.source.kivy = ../../kivy
 
 # (str) Presplash of the application
-presplash.filename = data/icon.png
+# presplash.filename = data/icon.png
 
 # (str) Icon of the application
-icon.filename = data/icon.png
+# icon.filename = data/icon.png
 
 # (list) Supported orientations
 # Valid options are: landscape, portrait, portrait-reverse or landscape-reverse
@@ -90,8 +90,8 @@ fullscreen = 0
 #android.presplash_lottie = "path/to/lottie/file.json"
 
 # (str) Adaptive icon of the application (used if Android API level is 26+ at runtime)
-icon.adaptive_foreground.filename = data/icon.png
-icon.adaptive_background.filename = data/icon.png
+# icon.adaptive_foreground.filename = data/icon.png
+# icon.adaptive_background.filename = data/icon.png
 
 # (list) Permissions
 # (See https://python-for-android.readthedocs.io/en/latest/buildoptions/#build-options-1 for all the supported syntaxes and properties)
