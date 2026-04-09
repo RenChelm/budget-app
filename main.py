@@ -139,7 +139,7 @@ class BudgetApp(App):
 
         # Load saved entries from file #
         try:
-            with open("data.json", "r") as f:
+            with open("transactions.json", "r") as f:
                 content = f.read().strip()
                 if content:
                     self.saved_amounts = json.loads(content)
@@ -397,7 +397,7 @@ class BudgetApp(App):
 
         self.saved_amounts.append(entry)
 
-        with open("data.json", "w") as f:
+        with open("transactions.json", "w") as f:
             json.dump(self.saved_amounts, f, default=str)
 
         self.update_display()
@@ -409,7 +409,7 @@ class BudgetApp(App):
         if 0 <= index < len(self.saved_amounts):
             del self.saved_amounts[index]
 
-            with open("data.json", "w") as f:
+            with open("transactions.json", "w") as f:
                 json.dump(self.saved_amounts, f, default=str)
             
             self.update_display()
@@ -462,7 +462,7 @@ class BudgetApp(App):
         self.saved_amounts[index]["amount"] = new_amount
         self.saved_amounts[index]["category"] = new_category
 
-        with open("data.json", "w") as f:
+        with open("transactions.json", "w") as f:
             json.dump(self.saved_amounts, f, default=str)
 
         self.update_display()

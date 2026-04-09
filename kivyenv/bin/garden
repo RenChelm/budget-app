@@ -1,4 +1,4 @@
-#!/home/renchelm/projects/budget_app/kivyenv/bin/python3.10
+#!/home/ren-hyde/Desktop/Folders/budget-app/kivyenv/bin/python3
 
 import sys
 import argparse
