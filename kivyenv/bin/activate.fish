@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV /home/ren-hyde/Desktop/Folders/budget-app/kivyenv
+set -gx VIRTUAL_ENV /home/ren-hyde/Desktop/Folders/projects/budget-app/kivyenv
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"bin $PATH

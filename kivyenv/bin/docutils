@@ -1,4 +1,4 @@
-#!/home/ren-hyde/Desktop/Folders/budget-app/kivyenv/bin/python3
+#!/home/ren-hyde/Desktop/Folders/projects/budget-app/kivyenv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
