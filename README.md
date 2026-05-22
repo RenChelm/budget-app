@@ -55,37 +55,9 @@ python3 main.py
 
 The app will open in a window sized to simulate a mobile screen (360x800).
 
-## Docker (DEBUGGING)
+## Docker (WIP)
 
 (WIP)
-
-### 1. Build the image
-```bash
-docker build -t budget-app .
-```
-
-### 2. Run the container
-On Linux, you need to share your display socket with the container:
-
-```bash
-# Grant access to X server (run this once)
-xhost +local:docker
-
-# Run the app
-docker run -it --rm \
-    --network=host \
-    -e DISPLAY=$DISPLAY \
-    -e SDL_VIDEODRIVER=x11 \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v $HOME/.Xauthority:/root/.Xauthority:ro \
-    budget-app
-```
-
-### Troubleshooting: GUI Not Appearing
-If the app starts in the terminal but no window appears:
-1. Ensure you have run `xhost +local:docker` on your host.
-2. If you are on **Wayland** (default for many modern laptops), ensure your XWayland is active.
-3. Check **Docker Desktop Settings** -> **Resources** -> **File Sharing** and ensure `/tmp` and your `$HOME` folder (for `.Xauthority`) are shared.
 
 ## Building for Android
 
