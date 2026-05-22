@@ -50,14 +50,14 @@ Ensure you have Python 3.8+ installed. It is recommended to use a virtual enviro
 To run the application locally on your desktop:
 
 ```bash
-python main.py
+python3 main.py
 ```
 
 The app will open in a window sized to simulate a mobile screen (360x800).
 
 ## Docker (DEBUGGING)
 
-You can also run the application using Docker.
+(WIP)
 
 ### 1. Build the image
 ```bash
