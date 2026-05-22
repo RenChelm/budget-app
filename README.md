@@ -9,7 +9,7 @@ A mobile-friendly personal finance tracker built with **Python** and the **Kivy 
 - **Transaction Management**: Easily add, edit, and delete transactions.
 - **Categorization**: Group expenses into categories such as Food, Bills, Entertainment, Rent, Savings, and more.
 - **Real-time Statistics**: View "Total Spent" and "Total Transactions" at a glance.
-- **Persistent Storage**: All data is saved locally in `data.json`, ensuring your records remain available between sessions.
+- **Persistent Storage**: All data is saved locally in `transactions.json`, ensuring your records remain available between sessions.
 - **Mobile-First Design**: Optimized for a 360x800 resolution, perfect for modern smartphones.
 - **Smooth Navigation**: Uses Kivy's `RecycleView` for efficient handling of long transaction histories.
 
@@ -103,9 +103,9 @@ The `buildozer.spec` file is already configured with the required permissions an
 ## Project Structure
 
 - `main.py`: The entry point and core logic of the application.
-- `data.json`: Local storage for your transactions (REWORKING).
+- `transactions.json`: Local storage for your transactions (REWORKING).
 - `buildozer.spec`: Configuration for Android deployment (DEBUGGING).
-- `data/icon.png`: Application icon (WIP).
+- `assets/icon.png`: Application icon (WIP).
 - `README.md`: Project documentation.
 
 ## License

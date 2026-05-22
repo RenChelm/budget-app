@@ -89,7 +89,7 @@ class EntryRow(FloatLayout):
         self.amount_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
         self.bind(amount_text=self.amount_label.setter("text"))
 
-        ## EDIT BUTTON (BOTTON-RIGHT) ##
+        ## EDIT BUTTON (BOTTOM-RIGHT) ##
 
         self.edit_btn = Button(
             text="Edit",
@@ -102,7 +102,7 @@ class EntryRow(FloatLayout):
         )
         self.edit_btn.bind(on_release=self.on_edit_pressed)
 
-        ## DELETE BUTTON (FAR RIGHT) ##
+        ## DELETE BUTTON (FAR-RIGHT) ##
 
         self.delete_btn = Button(
             text="X",
@@ -136,10 +136,11 @@ class BudgetApp(App):
     def build(self):
 
         self.saved_amounts = []
+        self.transactions_file = os.path.join(self.user_data_dir, "transactions.json")
 
         # Load saved entries from file #
         try:
-            with open("transactions.json", "r") as f:
+            with open(self.transactions_file, "r") as f:
                 content = f.read().strip()
                 if content:
                     self.saved_amounts = json.loads(content)
@@ -264,7 +265,7 @@ class BudgetApp(App):
 
         ## BOTTOM RIGHT BUTTON CLUSTER ##
 
-        button_cluster = BoxLayout(
+        btn_cluster = BoxLayout(
             orientation="vertical",
             size_hint=(None, None),
             width=60,
@@ -305,9 +306,9 @@ class BudgetApp(App):
         btn_budget.text_size = btn_budget.size
         btn_budget.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
 
-        button_cluster.add_widget(btn_add)
-        button_cluster.add_widget(btn_budget)
-        main.add_widget(button_cluster)
+        btn_cluster.add_widget(btn_add)
+        btn_cluster.add_widget(btn_budget)
+        main.add_widget(btn_cluster)
 
         root.add_widget(main)
         
@@ -397,7 +398,7 @@ class BudgetApp(App):
 
         self.saved_amounts.append(entry)
 
-        with open("transactions.json", "w") as f:
+        with open(self.transactions_file, "w") as f:
             json.dump(self.saved_amounts, f, default=str)
 
         self.update_display()
@@ -409,7 +410,7 @@ class BudgetApp(App):
         if 0 <= index < len(self.saved_amounts):
             del self.saved_amounts[index]
 
-            with open("transactions.json", "w") as f:
+            with open(self.transactions_file, "w") as f:
                 json.dump(self.saved_amounts, f, default=str)
             
             self.update_display()
@@ -462,7 +463,7 @@ class BudgetApp(App):
         self.saved_amounts[index]["amount"] = new_amount
         self.saved_amounts[index]["category"] = new_category
 
-        with open("transactions.json", "w") as f:
+        with open(self.transactions_file, "w") as f:
             json.dump(self.saved_amounts, f, default=str)
 
         self.update_display()
@@ -497,12 +498,14 @@ class BudgetApp(App):
             }]
             return
             
-        sorted_entries = sorted(self.saved_amounts, key=lambda x: x["timestamp"], reverse=True)
+        indexed_entries = sorted(
+            enumerate(self.saved_amounts),
+            key=lambda pair: pair[1]["timestamp"],
+            reverse=True
+        )
 
         rows = []
-        for sorted_entry in sorted_entries:
-            original_index = self.saved_amounts.index(sorted_entry)
-
+        for original_index, sorted_entry in indexed_entries:
             t = sorted_entry["timestamp"].strftime("%b %d, %I:%M %p")
             category = sorted_entry["category"] or "Uncategorized"
             amount = f"${sorted_entry['amount']:.2f}"
@@ -522,12 +525,6 @@ class BudgetApp(App):
         self.spent_label.text = f"Total Spent: ${total_spent:.2f}"
         self.trans_label.text = f"Total Transactions: {total_transactions}"
 
-    ## UPDATE TOP BAR RECTANGLE ON RESIZE/MOVE - METHOD ##
 
-    def update_rect(instance, value):
-        self.top_rect.pos = instance.pos
-        self.top_rect.size = instance.size
-
-        top_bar.bind(pos=update_rect, size=update_rect)
-
-BudgetApp().run()
+if __name__ == "__main__":
+    BudgetApp().run()
