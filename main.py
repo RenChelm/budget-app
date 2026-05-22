@@ -15,9 +15,8 @@ from kivy.uix.popup import Popup
 from kivy.uix.textinput import TextInput
 from kivy.uix.widget import Widget
 
-from kivy.core.text import FontContextManager as fcm
-fcm.create('system://budgetapp')
-family = fcm.add_font('./assets/fonts/ovelion/ttf/Ovelion-Zpjqx.ttf')
+from kivy.core.text import LabelBase
+from kivy.lang import Builder
 
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
@@ -138,6 +137,19 @@ class EntryRow(FloatLayout):
 
 class BudgetApp(App):
     def build(self):
+
+        # Uses "Noverich" font (assets/fonts/noverich/ttf/Noverich-KVRol.ttf) and previously
+        # "Ovelion" (assets/fonts/ovelion/ttf/Ovelion-Zpjqx.ttf). Both are personal-use-only
+        # demo fonts by Syauqi Studio and are excluded from the repo. Place the font file at
+        # the path above to restore custom typography, or swap in any TTF of your choice.
+        font_path = os.path.join(os.path.dirname(__file__), 'assets', 'fonts', 'noverich', 'ttf', 'Noverich-KVRol.ttf')
+        LabelBase.register(name='Noverich', fn_regular=font_path)
+        Builder.load_string('''
+<Label>:
+    font_name: 'Noverich'
+<Button>:
+    font_name: 'Noverich'
+''')
 
         self.saved_amounts = []
         self.transactions_file = os.path.join(self.user_data_dir, "transactions.json")
@@ -281,7 +293,6 @@ class BudgetApp(App):
 
         btn_add = Button(
             text="Add",
-            # font = Label(font_context = "system://budgetapp", family_name=family),
             halign="center",
             valign="middle",
             background_normal = "",

@@ -108,6 +108,16 @@ The `buildozer.spec` file is already configured with the required permissions an
 - `assets/icon.png`: Application icon (WIP).
 - `README.md`: Project documentation.
 
+## Fonts
+
+This project uses the **Noverich** font (previously **Ovelion**), both personal-use-only demo fonts by [Syauqi Studio](https://www.myfonts.com/collections/syauqi-studio-foundry). Due to their licenses, the font files are not included in this repository.
+
+To restore custom typography when building locally, obtain the font and place it at:
+```
+assets/fonts/noverich/ttf/Noverich-KVRol.ttf
+```
+Alternatively, swap in any TTF font of your choice and update the path in `main.py`.
+
 ## License
 
 [MIT](LICENSE)
