@@ -15,6 +15,10 @@ from kivy.uix.popup import Popup
 from kivy.uix.textinput import TextInput
 from kivy.uix.widget import Widget
 
+from kivy.core.text import FontContextManager as fcm
+fcm.create('system://budgetapp')
+family = fcm.add_font('./assets/fonts/ovelion/ttf/Ovelion-Zpjqx.ttf')
+
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
@@ -277,6 +281,7 @@ class BudgetApp(App):
 
         btn_add = Button(
             text="Add",
+            # font = Label(font_context = "system://budgetapp", family_name=family),
             halign="center",
             valign="middle",
             background_normal = "",
