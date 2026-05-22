@@ -6,6 +6,9 @@ bin/
 *.apk
 *.aab
 
+# Font files (personal use only licenses)
+assets/fonts/
+
 # Python virtual environments
 venv/
 env/
