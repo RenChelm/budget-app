@@ -15,8 +15,6 @@ from kivy.uix.popup import Popup
 from kivy.uix.textinput import TextInput
 from kivy.uix.widget import Widget
 
-from kivy.core.text import LabelBase
-from kivy.lang import Builder
 
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
@@ -27,6 +25,7 @@ from kivy.graphics import Color, RoundedRectangle
 
 from kivy.properties import StringProperty
 from kivy.properties import NumericProperty
+from kivy.metrics import dp, sp
 
 from datetime import datetime
 
@@ -41,13 +40,13 @@ class EntryRow(FloatLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.size_hint_y = None
-        self.height = 70
+        self.height = dp(70)
 
         with self.canvas.before:
             Color(*self.bg_color)
             self.bg_rect = RoundedRectangle(
-                radius=[10], 
-                pos=self.pos, 
+                radius=[dp(10)],
+                pos=self.pos,
                 size=self.size
             )
 
@@ -58,7 +57,7 @@ class EntryRow(FloatLayout):
         self.timestamp_label = Label(
             text="",
             size_hint=(None, None),
-            size=(180, 30),
+            size=(dp(180), dp(30)),
             pos_hint={"x": 0.00, "y": 0.60},
             halign="left",
             valign="middle"
@@ -71,7 +70,7 @@ class EntryRow(FloatLayout):
         self.category_label = Label(
             text="",
             size_hint=(None, None),
-            size=(180, 30),
+            size=(dp(180), dp(30)),
             pos_hint={"x": 0.00, "y": 0.20},
             halign="left",
             valign="middle"
@@ -84,7 +83,7 @@ class EntryRow(FloatLayout):
         self.amount_label = Label(
             text="",
             size_hint=(None, None),
-            size=(100, 30),
+            size=(dp(100), dp(30)),
             pos_hint={"right": 0.95, "y": 0.60},
             halign="right",
             valign="middle"
@@ -97,7 +96,7 @@ class EntryRow(FloatLayout):
         self.edit_btn = Button(
             text="Edit",
             size_hint=(None, None),
-            size=(60, 30),
+            size=(dp(60), dp(30)),
             pos_hint={"right": 0.95, "y": 0.20},
             background_normal="",
             background_color=(0.3, 0.5, 0.8, 1),
@@ -110,7 +109,7 @@ class EntryRow(FloatLayout):
         self.delete_btn = Button(
             text="X",
             size_hint=(None, None),
-            size=(40, 30),
+            size=(dp(40), dp(30)),
             pos_hint={"right": 0.80, "y": 0.20},
             background_normal="",
             background_color=(0.8, 0.3, 0.3, 1),
@@ -125,8 +124,8 @@ class EntryRow(FloatLayout):
         self.add_widget(self.delete_btn)
 
     def update_rect(self, *args):
-        self.bg_rect.pos = (self.x + 5, self.y + 5)
-        self.bg_rect.size = (self.width - 2, self.height - 2)
+        self.bg_rect.pos = (self.x + dp(5), self.y + dp(5))
+        self.bg_rect.size = (self.width - dp(2), self.height - dp(2))
 
     def on_delete_pressed(self, instance):
         App.get_running_app().delete_entry(self.index)
@@ -137,19 +136,6 @@ class EntryRow(FloatLayout):
 
 class BudgetApp(App):
     def build(self):
-
-        # Uses "Noverich" font (assets/fonts/noverich/ttf/Noverich-KVRol.ttf) and previously
-        # "Ovelion" (assets/fonts/ovelion/ttf/Ovelion-Zpjqx.ttf). Both are personal-use-only
-        # demo fonts by Syauqi Studio and are excluded from the repo. Place the font file at
-        # the path above to restore custom typography, or swap in any TTF of your choice.
-        font_path = os.path.join(os.path.dirname(__file__), 'assets', 'fonts', 'noverich', 'ttf', 'Noverich-KVRol.ttf')
-        LabelBase.register(name='Noverich', fn_regular=font_path)
-        Builder.load_string('''
-<Label>:
-    font_name: 'Noverich'
-<Button>:
-    font_name: 'Noverich'
-''')
 
         self.saved_amounts = []
         self.transactions_file = os.path.join(self.user_data_dir, "transactions.json")
@@ -185,8 +171,8 @@ class BudgetApp(App):
 
         top_bar = BoxLayout(
             size_hint=(1, 0.1),
-            padding=10,
-            spacing=10
+            padding=dp(10),
+            spacing=dp(10)
         )
 
         top_bar.canvas.before.clear()
@@ -198,7 +184,7 @@ class BudgetApp(App):
         top_bar.bind(pos = lambda i, v: setattr(self.top_rect, 'pos', i.pos),
                      size = lambda i, v: setattr(self.top_rect, 'size', i.size))
 
-        top_bar.add_widget(Label(text="Transactions", font_size=24))
+        top_bar.add_widget(Label(text="Transactions", font_size=sp(24)))
 
         root.add_widget(top_bar)
 
@@ -231,7 +217,7 @@ class BudgetApp(App):
 
         divider_bot = Widget(
             size_hint=(1, None),
-            height=9,
+            height=dp(9),
             pos_hint={"y": 0.264}
         )
         with divider_bot.canvas.before:
@@ -248,7 +234,7 @@ class BudgetApp(App):
 
         divider_top = Widget(
             size_hint=(1, None),
-            height=9,
+            height=dp(9),
             pos_hint={"y": 0.984}
         )
         with divider_top.canvas.before:
@@ -266,9 +252,9 @@ class BudgetApp(App):
         info_panel = BoxLayout(
             orientation="vertical",
             size_hint=(0.6, None),
-            height=185,
+            height=dp(185),
             pos_hint={"x": 0.02, "y": 0.005},
-            spacing=5
+            spacing=dp(5)
         ) 
 
         self.spent_label = Label(text="Total Spent: $0.00")
@@ -284,9 +270,9 @@ class BudgetApp(App):
         btn_cluster = BoxLayout(
             orientation="vertical",
             size_hint=(None, None),
-            width=60,
+            width=dp(60),
             pos_hint={"right": 0.99, "y": 0.005},
-            spacing=3
+            spacing=dp(3)
         )
 
         ## ADD BUTTON ##
@@ -299,7 +285,7 @@ class BudgetApp(App):
             background_color = (0.51765, 0.878, 0.737, 1),
             color = (0, 0, 0, 1),
             size_hint=(1, None),
-            height=91,
+            height=dp(91),
             on_release=self.open_transaction_window
         )
 
@@ -313,7 +299,7 @@ class BudgetApp(App):
             background_color = (0.51765, 0.878, 0.737, 1),
             color = (0, 0, 0, 1),
             size_hint=(1, None),
-            height=91
+            height=dp(91)
         )
 
         # Center text #
@@ -335,12 +321,12 @@ class BudgetApp(App):
     ## ADD TRANSACTION WINDOW - METHOD ##
     
     def open_transaction_window(self, instance):
-        layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
+        layout = BoxLayout(orientation="vertical", padding=dp(10), spacing=dp(10))
 
         self.input_box = TextInput(
             multiline=False,
             size_hint_y=None,
-            height=40
+            height=dp(40)
         )
 
         self.category_btn = Button(text="Select Category", size_hint=(1, 0.3))
@@ -363,14 +349,14 @@ class BudgetApp(App):
     ## CATEGORY SELECTION WINDOW - METHOD ##
 
     def open_category_window(self):
-        layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
+        layout = BoxLayout(orientation="vertical", padding=dp(10), spacing=dp(10))
 
-        categories = ["Food", "Bills", "Entertainment", "Subscriptions", 
-                      "Rent","Insurance", "Savings", "Medicine", "Therapy", 
+        categories = ["Food", "Bills", "Entertainment", "Subscriptions",
+                      "Rent","Insurance", "Savings", "Medicine", "Therapy",
                       "Credit Card", "Personal Care/Hygiene", "Other"]
 
         for cat in categories:
-            btn = Button(text=cat, size_hint_y=None, height=40)
+            btn = Button(text=cat, size_hint_y=None, height=dp(40))
             btn.bind(on_release=lambda instance, c=cat: self.select_category(c))
             layout.add_widget(btn)
 
@@ -435,14 +421,14 @@ class BudgetApp(App):
 
     def open_edit_window(self, index):
         entry = self.saved_amounts[index]
-        layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
+        layout = BoxLayout(orientation="vertical", padding=dp(10), spacing=dp(10))
 
         amount_input = TextInput(
             text=str(entry["amount"]),
             multiline=False,
             input_filter="float",
             size_hint_y=None,
-            height=40
+            height=dp(40)
         )
 
         category_btn = Button(text=entry.get("category") or "Uncategorized", size_hint=(1, 0.3))
