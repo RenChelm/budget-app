@@ -60,7 +60,7 @@ This project is configured for **Buildozer** with a custom local p4a recipe to e
 1. Ensure Buildozer and its system dependencies are installed (Linux recommended).
 2. Run:
    ```bash
-   buildozer android debug 2>&1 | tee build_output.txt
+   buildozer android debug
    ```
 3. The resulting APK will be located in the `bin/` directory.
 
