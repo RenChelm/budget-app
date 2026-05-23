@@ -57,10 +57,14 @@ The app will open in a window sized to simulate a mobile screen (360x800).
 
 This project is configured for **Buildozer** with a custom local p4a recipe to ensure compatibility with NDK r25b. To generate an APK:
 
-1. Ensure Buildozer and its system dependencies are installed (Linux recommended).
+1. Ensure Buildozer and its system dependencies are installed (Linux or WSL recommended).
 2. Run:
    ```bash
    buildozer android debug
+   ```
+   (Optional) With Buildozer build log saved to file:
+   ```
+   buildozer android debug 2>&1 | tee build_output.txt
    ```
 3. The resulting APK will be located in the `bin/` directory.
 
