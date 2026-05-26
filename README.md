@@ -74,9 +74,13 @@ Key build configuration:
 ## Project Structure
 
 - `main.py`: Entry point and core application logic.
+- `add_transaction_popup.py`: Self contained class that handles transactions.
+- `category_select_popup.py`: Self contained class that handles category selection.
+- `edit_transaction_popup.py`: Self contained class that handles transaction editing.
 - `buildozer.spec`: Buildozer configuration for Android deployment.
 - `p4a_recipes/cython/`: Local p4a recipe overriding Cython to 3.0.10 for NDK r25b compatibility.
 - `assets/images/icon.png`: Application icon (WIP).
+- `DEVELOPMENT.md`: Personal development reference documentation.
 - `README.md`: Project documentation.
 
 ## License
