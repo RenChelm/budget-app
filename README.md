@@ -62,10 +62,6 @@ This project is configured for **Buildozer** with a custom local p4a recipe to e
    ```bash
    buildozer android debug
    ```
-   (Optional) With Buildozer build log saved to file:
-   ```
-   buildozer android debug 2>&1 | tee build_output.txt
-   ```
 3. The resulting APK will be located in the `bin/` directory.
 
 Key build configuration:
