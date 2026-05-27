@@ -30,7 +30,9 @@ class BudgetApp(App):
     def build(self):
 
         self.saved_amounts = []
+        self.saved_categories = []
         self.transactions_file = os.path.join(self.user_data_dir, "transactions.json")
+        self.categories_file = os.path.join(self.user_data_dir, "categories.json")
 
         # Load saved entries from file #
         try:
@@ -47,6 +49,17 @@ class BudgetApp(App):
                     self.saved_amounts = []
         except (FileNotFoundError, json.JSONDecodeError):
             self.saved_amounts = []
+
+        try:
+            with open(self.categories_file, "r") as f:
+                content = f.read().strip()
+                if content:
+                    self.saved_categories = json.loads(content)
+
+                else:
+                    self.saved_categories = []
+        except (FileNotFoundError, json.JSONDecodeError):
+            self.saved_categories = []
 
         root = BoxLayout(orientation="vertical")
 
@@ -219,7 +232,7 @@ class BudgetApp(App):
 
     def select_category(self, category, category_btn, popup):
         self.selected_category = category
-        category_btn.text = category
+        category_btn.text = category["name"]
         
         popup.dismiss()
 
@@ -270,14 +283,16 @@ class BudgetApp(App):
         rows = []
         for original_index, sorted_entry in indexed_entries:
             t = sorted_entry["timestamp"].strftime("%b %d, %I:%M %p")
-            category = sorted_entry["category"] or "Uncategorized"
+            category = sorted_entry["category"]["name"] if sorted_entry["category"] else "Uncategorized"
             amount = f"${sorted_entry['amount']:.2f}"
+            color = sorted_entry["category"]["color"] if sorted_entry["category"] else [0.30, 0.45, 0.32, 1]
 
             rows.append({
                 "timestamp_text": t,
                 "category_text": category,
                 "amount_text": amount,
-                "index": original_index
+                "index": original_index,
+                "category_color": color
             })
 
         self.rv.data = rows

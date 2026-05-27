@@ -3,7 +3,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.graphics import Color, RoundedRectangle
-from kivy.properties import StringProperty, NumericProperty
+from kivy.properties import StringProperty, NumericProperty, ListProperty
 from kivy.metrics import dp, sp
 
 class EntryRow(FloatLayout):
@@ -12,7 +12,7 @@ class EntryRow(FloatLayout):
     amount_text = StringProperty("")
     index = NumericProperty(0)
 
-    bg_color = (0.30, 0.45, 0.32, 1)
+    category_color = ListProperty([0.30, 0.45, 0.32, 1])
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -20,14 +20,14 @@ class EntryRow(FloatLayout):
         self.height = dp(70)
 
         with self.canvas.before:
-            Color(*self.bg_color)
+            self.bg_color_instruction = Color(*self.category_color)
             self.bg_rect = RoundedRectangle(
                 radius=[dp(10)],
                 pos=self.pos,
                 size=self.size
             )
 
-        self.bind(pos=self.update_rect, size=self.update_rect)
+        self.bind(pos=self.update_rect, size=self.update_rect, category_color=self.update_color)
 
         ## TIMESTAMP (TOP-LEFT) ##
 
@@ -103,6 +103,9 @@ class EntryRow(FloatLayout):
     def update_rect(self, *args):
         self.bg_rect.pos = (self.x + dp(5), self.y + dp(5))
         self.bg_rect.size = (self.width - dp(2), self.height - dp(2))
+
+    def update_color(self, instance, value):
+        self.bg_color_instruction.rgba = value
 
     def on_delete_pressed(self, instance):
         App.get_running_app().delete_entry(self.index)
