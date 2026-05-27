@@ -6,7 +6,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.textinput import TextInput
 from kivy.metrics import dp
 
-from category_select_popup import CategorySelectPopup
+from ui.category_select_popup import CategorySelectPopup
 
 class EditTransactionPopup(Popup):
     def __init__(self, app, index, **kwargs):

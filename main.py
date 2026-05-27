@@ -22,9 +22,9 @@ from kivy.metrics import dp, sp
 
 from datetime import datetime
 
-from entry_row import EntryRow
-from add_transaction_popup import AddTransactionPopup
-from edit_transaction_popup import EditTransactionPopup
+from ui.entry_row import EntryRow
+from ui.add_transaction_popup import AddTransactionPopup
+from ui.edit_transaction_popup import EditTransactionPopup
 
 class BudgetApp(App):
     def build(self):

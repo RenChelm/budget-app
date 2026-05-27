@@ -8,7 +8,7 @@ from kivy.metrics import dp
 
 from datetime import datetime
 
-from category_select_popup import CategorySelectPopup
+from ui.category_select_popup import CategorySelectPopup
 
 class AddTransactionPopup(Popup):
     def __init__(self, app, **kwargs):
