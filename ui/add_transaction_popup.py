@@ -23,19 +23,20 @@ class AddTransactionPopup(Popup):
             height=dp(40)
         )
 
-        self.category_btn = Button(text="Select Category", size_hint=(1, 0.3))
+        self.category_btn = Button(text="Select Category", size_hint=(1, 0.3), color=(1, 1, 1, 1), outline_color=(0, 0, 0, 1), outline_width=1)
         self.category_btn.bind(on_release=lambda x: self.open_category_window())
 
-        save_btn = Button(text="Save", size_hint=(1, 0.3))
+        save_btn = Button(text="Save", size_hint=(1, 0.3), color=(1, 1, 1, 1), outline_color=(0, 0, 0, 1), outline_width=1)
         save_btn.bind(on_release=lambda x: self.save_text())
 
         layout.add_widget(self.input_box)
         layout.add_widget(self.category_btn)
         layout.add_widget(save_btn)
 
-        self.title="Add Transaction"
-        self.content=layout
-        self.size_hint=(0.8, 0.3)
+        self.title = "Add Transaction"
+        self.title_color = (1, 1, 1, 1)
+        self.content = layout
+        self.size_hint = (0.8, 0.3)
 
     def open_category_window(self):
         CategorySelectPopup(self.app, self.category_btn).open()

@@ -24,34 +24,40 @@ class EditTransactionPopup(Popup):
             height=dp(40)
         )
 
-        category_btn = Button(text=entry.get("category") or "Uncategorized", size_hint=(1, 0.3))
+        existing_cat = entry.get("category")
+        category_btn = Button(
+            text=existing_cat["name"] if isinstance(existing_cat, dict) else "Uncategorized",
+            background_normal="",
+            background_color=existing_cat["color"] if isinstance(existing_cat, dict) else (0.6, 0.6, 0.6, 1),
+            color=(1, 1, 1, 1),
+            outline_color=(0, 0, 0, 1),
+            outline_width=1,
+            size_hint=(1, 0.3)
+        )
         category_btn.bind(on_release=lambda inst: self.open_category_window_for_edit(index, category_btn))
 
-        save_btn = Button(text="Save", size_hint=(1, 0.3))
+        save_btn = Button(text="Save", size_hint=(1, 0.3), color=(1, 1, 1, 1), outline_color=(0, 0, 0, 1), outline_width=1)
         save_btn.bind(
-            on_release=lambda inst: self.save_edit(
-                index, 
-                amount_input.text,
-                category_btn.text
-            )
+            on_release=lambda inst: self.save_edit(index, amount_input.text)
         )
 
         layout.add_widget(amount_input)
         layout.add_widget(category_btn)
         layout.add_widget(save_btn)
 
-        self.title="Edit Transaction"
-        self.content=layout
-        self.size_hint=(0.8, 0.3)
+        self.title = "Edit Transaction"
+        self.title_color = (1, 1, 1, 1)
+        self.content = layout
+        self.size_hint = (0.8, 0.3)
 
-    def save_edit(self, index, new_amount, new_category):
+    def save_edit(self, index, new_amount):
         try:
             new_amount = float(new_amount)
         except ValueError:
             return
 
         self.app.saved_amounts[index]["amount"] = new_amount
-        self.app.saved_amounts[index]["category"] = new_category
+        self.app.saved_amounts[index]["category"] = getattr(self.app, "selected_category", self.app.saved_amounts[index]["category"])
 
         with open(self.app.transactions_file, "w") as f:
             json.dump(self.app.saved_amounts, f, default=str)

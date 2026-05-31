@@ -5,7 +5,7 @@ A mobile-friendly personal finance tracker built with **Python** and the **Kivy 
 ## Features
 
 - **Transaction Management**: Add, edit, and delete transactions.
-- **Custom Categories**: Group expenses by creating custom persistent categories.
+- **Custom Categories**: Group expenses by creating custom persistent categories with several color options.
 - **Real-time Statistics**: View "Total Spent" and "Total Transactions" at a glance.
 - **Persistent Storage**: Data is saved locally to the device using Kivy's `user_data_dir`, ensuring records persist between sessions.
 - **Density-Independent Layout**: UI scales correctly across screen sizes and densities using Kivy's `dp()`/`sp()` units.
@@ -76,6 +76,7 @@ Key build configuration:
 - `main.py`: Entry point and core application logic.
 - `add_transaction_popup.py`: Self contained class that handles transactions.
 - `category_select_popup.py`: Self contained class that handles category selection.
+- `category_edit_popup.py`: Self contained class that handles category edits.
 - `edit_transaction_popup.py`: Self contained class that handles transaction editing.
 - `buildozer.spec`: Buildozer configuration for Android deployment.
 - `p4a_recipes/cython/`: Local p4a recipe overriding Cython to 3.0.10 for NDK r25b compatibility.
