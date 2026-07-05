@@ -6,6 +6,8 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.metrics import dp
 
+from ui.color_utils import contrast_color
+
 PALETTE = [
     (0.9, 0.3, 0.3, 1),   # Red
     (1.0, 0.6, 0.2, 1),   # Orange
@@ -68,7 +70,7 @@ class CategoryEditPopup(Popup):
                 size_hint_y=None,
                 height=dp(50),
                 font_size=dp(18),
-                color=(1, 1, 1, 1),
+                color=contrast_color(color)
             )
             btn.bind(on_release=lambda inst, c=color: self._select_color(c))
             self.swatch_buttons[color] = btn
@@ -83,7 +85,7 @@ class CategoryEditPopup(Popup):
             height=dp(44),
             background_normal="",
             background_color=(0.51765, 0.878, 0.737, 1),
-            color=(1, 1, 1, 1),
+            color=(0, 0, 0, 1)
         )
         save_btn.bind(on_release=lambda x: self._save())
         layout.add_widget(save_btn)

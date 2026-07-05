@@ -7,10 +7,11 @@ from kivy.uix.scrollview import ScrollView
 from kivy.metrics import dp
 
 from ui.category_edit_popup import CategoryEditPopup
+from ui.color_utils import contrast_color
 
 DEFAULT_CATEGORIES = [
     {"name": "Food",    "color": [1, 0.6, 0.2, 1]},
-    {"name": "Bills",   "color": [0.9, 0.3, 0.3, 1]},
+    {"name": "Bills",   "color": [0.9, 0.35, 0.3, 1]},
     {"name": "Rent",    "color": [0.6, 0.4, 0.9, 1]},
     {"name": "Savings", "color": [0.3, 0.8, 0.4, 1]},
     {"name": "Other",   "color": [0.6, 0.6, 0.6, 1]},
@@ -29,20 +30,20 @@ class CategorySelectPopup(Popup):
 
         self._populate_list()
 
-        new_btn = Button(
+        new_category_btn = Button(
             text="New Category",
             size_hint_y=None,
             height=dp(40),
             background_normal="",
             background_color=(0.51765, 0.878, 0.737, 1),
-            color=(1, 1, 1, 1),
+            color=(0, 0, 0, 1),
         )
-        new_btn.bind(on_release=lambda x: self._open_add_popup())
+        new_category_btn.bind(on_release=lambda x: self._open_add_popup())
 
         scroll = ScrollView()
         scroll.add_widget(self.list_layout)
         outer_layout.add_widget(scroll)
-        outer_layout.add_widget(new_btn)
+        outer_layout.add_widget(new_category_btn)
 
         self.title = "Manage Categories" if category_btn is None else "Select Category"
         self.title_color = (1, 1, 1, 1)
@@ -59,7 +60,7 @@ class CategorySelectPopup(Popup):
                 text=cat["name"],
                 background_normal="",
                 background_color=cat["color"],
-                color=(1, 1, 1, 1),
+                color=contrast_color(cat["color"])
             )
             cat_btn.bind(on_release=lambda inst, c=cat: self.app.select_category(c, self.category_btn, self))
 
@@ -93,7 +94,7 @@ class CategorySelectPopup(Popup):
                 text=cat["name"],
                 background_normal="",
                 background_color=cat["color"],
-                color=(1, 1, 1, 1),
+                color=contrast_color(cat["color"]),
                 size_hint_y=None,
                 height=dp(40)
             )

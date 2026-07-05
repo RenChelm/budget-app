@@ -6,6 +6,8 @@ from kivy.graphics import Color, RoundedRectangle
 from kivy.properties import StringProperty, NumericProperty, ListProperty
 from kivy.metrics import dp, sp
 
+from ui.color_utils import contrast_color
+
 class EntryRow(FloatLayout):
     timestamp_text = StringProperty("")
     category_text = StringProperty("")
@@ -38,7 +40,7 @@ class EntryRow(FloatLayout):
             pos_hint={"x": 0.00, "y": 0.60},
             halign="left",
             valign="middle",
-            color=(1, 1, 1, 1),
+            color=contrast_color(self.category_color)
         )
         self.timestamp_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
         self.bind(timestamp_text=self.timestamp_label.setter("text"))
@@ -52,7 +54,7 @@ class EntryRow(FloatLayout):
             pos_hint={"x": 0.00, "y": 0.20},
             halign="left",
             valign="middle",
-            color=(1, 1, 1, 1),
+            color=contrast_color(self.category_color)
         )
         self.category_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
         self.bind(category_text=self.category_label.setter("text"))
@@ -66,7 +68,7 @@ class EntryRow(FloatLayout):
             pos_hint={"right": 0.95, "y": 0.60},
             halign="right",
             valign="middle",
-            color=(1, 1, 1, 1),
+            color=contrast_color(self.category_color)
         )
         self.amount_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
         self.bind(amount_text=self.amount_label.setter("text"))
@@ -109,6 +111,7 @@ class EntryRow(FloatLayout):
 
     def update_color(self, instance, value):
         self.bg_color_instruction.rgba = value
+        self.timestamp_label.color = self.category_label.color = self.amount_label.color = contrast_color(value)
 
     def on_delete_pressed(self, instance):
         App.get_running_app().delete_entry(self.index)

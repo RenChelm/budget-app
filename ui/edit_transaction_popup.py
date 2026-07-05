@@ -7,6 +7,7 @@ from kivy.uix.textinput import TextInput
 from kivy.metrics import dp
 
 from ui.category_select_popup import CategorySelectPopup
+from ui.color_utils import contrast_color
 
 class EditTransactionPopup(Popup):
     def __init__(self, app, index, **kwargs):
@@ -29,7 +30,7 @@ class EditTransactionPopup(Popup):
             text=existing_cat["name"] if isinstance(existing_cat, dict) else "Uncategorized",
             background_normal="",
             background_color=existing_cat["color"] if isinstance(existing_cat, dict) else (0.6, 0.6, 0.6, 1),
-            color=(1, 1, 1, 1),
+            color=contrast_color(existing_cat["color"]),
             size_hint=(1, 0.3)
         )
         category_btn.bind(on_release=lambda inst: self.open_category_window_for_edit(index, category_btn))

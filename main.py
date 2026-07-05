@@ -153,24 +153,6 @@ class BudgetApp(App):
         )
         main.add_widget(divider_top)
 
-        ## BOTTOM LEFT CATEGORIES BUTTON ##
-
-        btn_categories = Button(
-            text="Categories",
-            halign="center",
-            valign="middle",
-            background_normal="",
-            background_color=(0.51765, 0.878, 0.737, 1),
-            color=(1, 1, 1, 1),
-            size_hint=(None, None),
-            width=dp(90),
-            height=dp(185),
-            pos_hint={"x": 0.02, "y": 0.005},
-            on_release=lambda x: CategorySelectPopup(self).open()
-        )
-        btn_categories.text_size = btn_categories.size
-        btn_categories.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
-        main.add_widget(btn_categories)
 
         ## BOTTOM CENTER INFO PANEL ##
 
@@ -181,6 +163,26 @@ class BudgetApp(App):
             pos_hint={"center_x": 0.5, "y": 0.005},
             spacing=dp(5)
         )
+
+        ## BOTTOM LEFT CATEGORIES BUTTON ##
+
+        btn_categories = Button(
+            text="Categories",
+            halign="center",
+            valign="middle",
+            background_normal="",
+            background_color=(0.51765, 0.878, 0.737, 1),
+            color=(0, 0, 0, 1),
+            size_hint=(None, None),
+            width=dp(90),
+            height=dp(185),
+            pos_hint={"x": 0.02, "y": 0.005},
+            on_release=lambda x: CategorySelectPopup(self).open()
+        )
+
+        btn_categories.text_size = btn_categories.size
+        btn_categories.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
+        main.add_widget(btn_categories)
 
         self.spent_label = Label(text="Total Spent: $0.00", halign="center", valign="middle", color=(1, 1, 1, 1))
         self.spent_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
@@ -210,7 +212,7 @@ class BudgetApp(App):
             valign="middle",
             background_normal="",
             background_color=(0.51765, 0.878, 0.737, 1),
-            color=(1, 1, 1, 1),
+            color=(0, 0, 0, 1),
             size_hint=(1, None),
             height=dp(91),
             on_release=self.open_transaction_window
@@ -224,7 +226,7 @@ class BudgetApp(App):
             valign="middle",
             background_normal="",
             background_color=(0.51765, 0.878, 0.737, 1),
-            color=(1, 1, 1, 1),
+            color=(0, 0, 0, 1),
             size_hint=(1, None),
             height=dp(91)
         )

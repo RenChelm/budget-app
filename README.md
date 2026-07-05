@@ -10,6 +10,7 @@ A mobile-friendly personal finance tracker built with **Python** and the **Kivy 
 - **Persistent Storage**: Data is saved locally to the device using Kivy's `user_data_dir`, ensuring records persist between sessions.
 - **Density-Independent Layout**: UI scales correctly across screen sizes and densities using Kivy's `dp()`/`sp()` units.
 - **Smooth Navigation**: Uses Kivy's `RecycleView` for efficient handling of long transaction histories.
+- **Dynamic Font Coloring**: Automatically applies contrasting font colors to categories depending on background luminance, improving text visibility.
 
 ## Tech Stack
 
@@ -74,10 +75,12 @@ Key build configuration:
 ## Project Structure
 
 - `main.py`: Entry point and core application logic.
-- `add_transaction_popup.py`: Self contained class that handles transactions.
-- `category_select_popup.py`: Self contained class that handles category selection.
-- `category_edit_popup.py`: Self contained class that handles category edits.
-- `edit_transaction_popup.py`: Self contained class that handles transaction editing.
+- `ui/add_transaction_popup.py`: Self contained class that handles transactions.
+- `ui/category_edit_popup.py`: Self contained class that handles category edits.
+- `ui/category_select_popup.py`: Self contained class that handles category selection.
+- `ui/colors_utils.py`: Self contained function that handles luminance-based font color for categories to improve text visibility.
+- `ui/edit_transaction_popup.py`: Self contained class that handles transaction editing.
+- `ui/entry_row.py`: Self contained class that handles transaction entry rows.
 - `buildozer.spec`: Buildozer configuration for Android deployment.
 - `p4a_recipes/cython/`: Local p4a recipe overriding Cython to 3.0.10 for NDK r25b compatibility.
 - `assets/images/icon.png`: Application icon (WIP).
