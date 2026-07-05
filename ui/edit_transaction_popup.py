@@ -30,13 +30,11 @@ class EditTransactionPopup(Popup):
             background_normal="",
             background_color=existing_cat["color"] if isinstance(existing_cat, dict) else (0.6, 0.6, 0.6, 1),
             color=(1, 1, 1, 1),
-            outline_color=(0, 0, 0, 1),
-            outline_width=1,
             size_hint=(1, 0.3)
         )
         category_btn.bind(on_release=lambda inst: self.open_category_window_for_edit(index, category_btn))
 
-        save_btn = Button(text="Save", size_hint=(1, 0.3), color=(1, 1, 1, 1), outline_color=(0, 0, 0, 1), outline_width=1)
+        save_btn = Button(text="Save", size_hint=(1, 0.3), color=(1, 1, 1, 1))
         save_btn.bind(
             on_release=lambda inst: self.save_edit(index, amount_input.text)
         )

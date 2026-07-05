@@ -51,8 +51,6 @@ class CategoryEditPopup(Popup):
             size_hint_y=None,
             height=dp(24),
             color=(1, 1, 1, 1),
-            outline_color=(0, 0, 0, 1),
-            outline_width=1
         ))
 
         rows = (len(PALETTE) + 3) // 4
@@ -71,8 +69,6 @@ class CategoryEditPopup(Popup):
                 height=dp(50),
                 font_size=dp(18),
                 color=(1, 1, 1, 1),
-                outline_color=(0, 0, 0, 1),
-                outline_width=1
             )
             btn.bind(on_release=lambda inst, c=color: self._select_color(c))
             self.swatch_buttons[color] = btn
@@ -88,8 +84,6 @@ class CategoryEditPopup(Popup):
             background_normal="",
             background_color=(0.51765, 0.878, 0.737, 1),
             color=(1, 1, 1, 1),
-            outline_color=(0, 0, 0, 1),
-            outline_width=1
         )
         save_btn.bind(on_release=lambda x: self._save())
         layout.add_widget(save_btn)

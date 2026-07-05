@@ -39,8 +39,6 @@ class EntryRow(FloatLayout):
             halign="left",
             valign="middle",
             color=(1, 1, 1, 1),
-            outline_color=(0, 0, 0, 1),
-            outline_width=1
         )
         self.timestamp_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
         self.bind(timestamp_text=self.timestamp_label.setter("text"))
@@ -55,8 +53,6 @@ class EntryRow(FloatLayout):
             halign="left",
             valign="middle",
             color=(1, 1, 1, 1),
-            outline_color=(0, 0, 0, 1),
-            outline_width=1
         )
         self.category_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
         self.bind(category_text=self.category_label.setter("text"))
@@ -71,8 +67,6 @@ class EntryRow(FloatLayout):
             halign="right",
             valign="middle",
             color=(1, 1, 1, 1),
-            outline_color=(0, 0, 0, 1),
-            outline_width=1
         )
         self.amount_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
         self.bind(amount_text=self.amount_label.setter("text"))
@@ -87,8 +81,6 @@ class EntryRow(FloatLayout):
             background_normal="",
             background_color=(0.3, 0.5, 0.8, 1),
             color=(1, 1, 1, 1),
-            outline_color=(0, 0, 0, 1),
-            outline_width=1
         )
         self.edit_btn.bind(on_release=self.on_edit_pressed)
 
@@ -102,8 +94,6 @@ class EntryRow(FloatLayout):
             background_normal="",
             background_color=(0.8, 0.3, 0.3, 1),
             color=(1, 1, 1, 1),
-            outline_color=(0, 0, 0, 1),
-            outline_width=1
         )
         self.delete_btn.bind(on_release=self.on_delete_pressed)
     

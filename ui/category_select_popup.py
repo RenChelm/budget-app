@@ -36,8 +36,6 @@ class CategorySelectPopup(Popup):
             background_normal="",
             background_color=(0.51765, 0.878, 0.737, 1),
             color=(1, 1, 1, 1),
-            outline_color=(0, 0, 0, 1),
-            outline_width=1
         )
         new_btn.bind(on_release=lambda x: self._open_add_popup())
 
@@ -62,8 +60,6 @@ class CategorySelectPopup(Popup):
                 background_normal="",
                 background_color=cat["color"],
                 color=(1, 1, 1, 1),
-                outline_color=(0, 0, 0, 1),
-                outline_width=1
             )
             cat_btn.bind(on_release=lambda inst, c=cat: self.app.select_category(c, self.category_btn, self))
 
@@ -72,8 +68,6 @@ class CategorySelectPopup(Popup):
                 background_normal="",
                 background_color=(0.8, 0.3, 0.3, 1),
                 color=(1, 1, 1, 1),
-                outline_color=(0, 0, 0, 1),
-                outline_width=1,
                 size_hint_x=None,
                 width=dp(36)
             )
@@ -84,8 +78,6 @@ class CategorySelectPopup(Popup):
                 background_normal="",
                 background_color=(0.3, 0.5, 0.8, 1),
                 color=(1, 1, 1, 1),
-                outline_color=(0, 0, 0, 1),
-                outline_width=1,
                 size_hint_x=None,
                 width=dp(50)
             )
@@ -102,8 +94,6 @@ class CategorySelectPopup(Popup):
                 background_normal="",
                 background_color=cat["color"],
                 color=(1, 1, 1, 1),
-                outline_color=(0, 0, 0, 1),
-                outline_width=1,
                 size_hint_y=None,
                 height=dp(40)
             )

@@ -90,7 +90,7 @@ class BudgetApp(App):
         top_bar.bind(pos = lambda i, v: setattr(self.top_rect, 'pos', i.pos),
                      size = lambda i, v: setattr(self.top_rect, 'size', i.size))
 
-        top_bar.add_widget(Label(text="Transactions", font_size=sp(24), color=(1, 1, 1, 1), outline_color=(0, 0, 0, 1), outline_width=1))
+        top_bar.add_widget(Label(text="Transactions", font_size=sp(24), color=(1, 1, 1, 1)))
 
         root.add_widget(top_bar)
 
@@ -162,8 +162,6 @@ class BudgetApp(App):
             background_normal="",
             background_color=(0.51765, 0.878, 0.737, 1),
             color=(1, 1, 1, 1),
-            outline_color=(0, 0, 0, 1),
-            outline_width=1,
             size_hint=(None, None),
             width=dp(90),
             height=dp(185),
@@ -184,9 +182,9 @@ class BudgetApp(App):
             spacing=dp(5)
         )
 
-        self.spent_label = Label(text="Total Spent: $0.00", halign="center", valign="middle", color=(1, 1, 1, 1), outline_color=(0, 0, 0, 1), outline_width=1)
+        self.spent_label = Label(text="Total Spent: $0.00", halign="center", valign="middle", color=(1, 1, 1, 1))
         self.spent_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
-        self.trans_label = Label(text="Total Transactions: 0", halign="center", valign="middle", color=(1, 1, 1, 1), outline_color=(0, 0, 0, 1), outline_width=1)
+        self.trans_label = Label(text="Total Transactions: 0", halign="center", valign="middle", color=(1, 1, 1, 1))
         self.trans_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
 
         info_panel.add_widget(self.spent_label)
@@ -213,8 +211,6 @@ class BudgetApp(App):
             background_normal="",
             background_color=(0.51765, 0.878, 0.737, 1),
             color=(1, 1, 1, 1),
-            outline_color=(0, 0, 0, 1),
-            outline_width=1,
             size_hint=(1, None),
             height=dp(91),
             on_release=self.open_transaction_window
@@ -229,8 +225,6 @@ class BudgetApp(App):
             background_normal="",
             background_color=(0.51765, 0.878, 0.737, 1),
             color=(1, 1, 1, 1),
-            outline_color=(0, 0, 0, 1),
-            outline_width=1,
             size_hint=(1, None),
             height=dp(91)
         )
