@@ -26,6 +26,7 @@ from ui.entry_row import EntryRow
 from ui.add_transaction_popup import AddTransactionPopup
 from ui.edit_transaction_popup import EditTransactionPopup
 from ui.category_select_popup import CategorySelectPopup
+from ui.color_utils import contrast_color
 
 class BudgetApp(App):
     def build(self):
@@ -258,6 +259,9 @@ class BudgetApp(App):
         self.selected_category = category
         if category_btn is not None:
             category_btn.text = category["name"]
+            category_btn.background_normal = ""
+            category_btn.background_color = category["color"]
+            category_btn.color = contrast_color(category["color"])
         popup.dismiss()
 
     ## DELETE ENTRY - METHOD ##
@@ -294,6 +298,7 @@ class BudgetApp(App):
                 "timestamp_text": "No entries yet.",
                 "category_text": "",
                 "amount_text": "",
+                "note_text": "",
                 "index": -1
             }]
             return
@@ -310,11 +315,13 @@ class BudgetApp(App):
             category = sorted_entry["category"]["name"] if sorted_entry["category"] else "Uncategorized"
             amount = f"${sorted_entry['amount']:.2f}"
             color = sorted_entry["category"]["color"] if sorted_entry["category"] else [0.30, 0.45, 0.32, 1]
+            note = sorted_entry.get("note") or ""
 
             rows.append({
                 "timestamp_text": t,
                 "category_text": category,
                 "amount_text": amount,
+                "note_text": note,
                 "index": original_index,
                 "category_color": color
             })

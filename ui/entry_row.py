@@ -12,6 +12,7 @@ class EntryRow(FloatLayout):
     timestamp_text = StringProperty("")
     category_text = StringProperty("")
     amount_text = StringProperty("")
+    note_text = StringProperty("")
     index = NumericProperty(0)
 
     category_color = ListProperty([0.30, 0.45, 0.32, 1])
@@ -59,6 +60,20 @@ class EntryRow(FloatLayout):
         self.category_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
         self.bind(category_text=self.category_label.setter("text"))
 
+        ## NOTE (MIDDLE) ##
+
+        self.note_label = Label(
+            text="",
+            size_hint=(None, None),
+            size=(dp(180), dp(30)),
+            pos_hint={"x": 0.25, "y": 0.20},
+            halign="left",
+            valign="middle",
+            color=contrast_color(self.category_color)
+        )
+        self.note_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
+        self.bind(note_text=self.note_label.setter("text"))
+
         ## AMOUNT (TOP-RIGHT) ##
 
         self.amount_label = Label(
@@ -101,6 +116,7 @@ class EntryRow(FloatLayout):
     
         self.add_widget(self.timestamp_label)
         self.add_widget(self.category_label)
+        self.add_widget(self.note_label)
         self.add_widget(self.amount_label)
         self.add_widget(self.edit_btn)
         self.add_widget(self.delete_btn)
@@ -111,7 +127,7 @@ class EntryRow(FloatLayout):
 
     def update_color(self, instance, value):
         self.bg_color_instruction.rgba = value
-        self.timestamp_label.color = self.category_label.color = self.amount_label.color = contrast_color(value)
+        self.timestamp_label.color = self.category_label.color = self.note_label.color = self.amount_label.color = contrast_color(value)
 
     def on_delete_pressed(self, instance):
         App.get_running_app().delete_entry(self.index)
