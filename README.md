@@ -6,6 +6,7 @@ A mobile-friendly personal finance tracker built with **Python** and the **Kivy 
 
 - **Transaction Management**: Add, edit, and delete transactions.
 - **Custom Categories**: Group expenses by creating custom persistent categories with several color options.
+- **Custom Notes**: Further specify transactions by adding transaction specific notes.
 - **Real-time Statistics**: View "Total Spent" and "Total Transactions" at a glance.
 - **Persistent Storage**: Data is saved locally to the device using Kivy's `user_data_dir`, ensuring records persist between sessions.
 - **Density-Independent Layout**: UI scales correctly across screen sizes and densities using Kivy's `dp()`/`sp()` units.
