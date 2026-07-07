@@ -16,11 +16,29 @@ class EntryRow(FloatLayout):
     index = NumericProperty(0)
 
     category_color = ListProperty([0.30, 0.45, 0.32, 1])
+    edit_color = ListProperty([1, 1, 0, 1])
+    delete_color = ListProperty([1, 0, 0, 1])
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.size_hint_y = None
         self.height = dp(70)
+
+        with self.canvas.before:
+            self.edit_color_instruction = Color(*self.edit_color)
+            self.edit_rect = RoundedRectangle(
+                radius=[dp(0)],
+                pos=(dp(360), self.y),
+                size=(dp(180), self.height)
+            )
+
+        with self.canvas.before:
+            self.delete_color_instruction = Color(*self.delete_color)
+            self.delete_rect = RoundedRectangle(
+                radius=[dp(0)],
+                pos=self.pos,
+                size=(dp(180), self.height)
+            )
 
         with self.canvas.before:
             self.bg_color_instruction = Color(*self.category_color)
@@ -30,7 +48,7 @@ class EntryRow(FloatLayout):
                 size=self.size
             )
 
-        self.bind(pos=self.update_rect, size=self.update_rect, category_color=self.update_color)
+        self.bind(pos=self.update_rect, size=self.update_rect, edit_color=self.update_edit_color, delete_color=self.update_delete_color,category_color=self.update_color)
 
         ## TIMESTAMP (TOP-LEFT) ##
 
@@ -122,12 +140,22 @@ class EntryRow(FloatLayout):
         self.add_widget(self.delete_btn)
 
     def update_rect(self, *args):
-        self.bg_rect.pos = (self.x + dp(5), self.y + dp(5))
-        self.bg_rect.size = (self.width - dp(2), self.height - dp(2))
+        self.edit_rect.pos = (self.x + dp(180), self.y)
+        self.edit_rect.size = (self.width - dp(180), self.height)
+        self.delete_rect.pos = (self.x, self.y)
+        self.delete_rect.size = (self.width - dp(180), self.height)
+        self.bg_rect.pos = (self.x, self.y)
+        self.bg_rect.size = (self.width, self.height)
 
     def update_color(self, instance, value):
         self.bg_color_instruction.rgba = value
         self.timestamp_label.color = self.category_label.color = self.note_label.color = self.amount_label.color = contrast_color(value)
+
+    def update_edit_color(self, instance, value):
+        self.edit_color_instruction.rgba = value
+
+    def update_delete_color(self, instance, value):
+        self.delete_color_instructions.rgba = value
 
     def on_delete_pressed(self, instance):
         App.get_running_app().delete_entry(self.index)

@@ -299,8 +299,11 @@ class BudgetApp(App):
                 "category_text": "",
                 "amount_text": "",
                 "note_text": "",
-                "index": -1
+                "index": -1,
+                "category_color": [0.30, 0.45, 0.32, 1]
             }]
+            self.spent_label.text = "Total Spent: $0.00"
+            self.trans_label.text = "Total Transactions: 0"
             return
             
         indexed_entries = sorted(
