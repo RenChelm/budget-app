@@ -8,6 +8,58 @@ from kivy.metrics import dp, sp
 
 from ui.color_utils import contrast_color
 
+
+class EntryRowBackground(FloatLayout):
+    edit_color = ListProperty([1, 1, 0, 1])
+    delete_color = ListProperty([1, 0, 0, 1])
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        with self.canvas.before:
+            self.edit_color_instruction = Color(*self.edit_color)
+            self.edit_rect = RoundedRectangle(radius=[dp(0)], pos=self.pos, size=self.size)
+
+        with self.canvas.before:
+            self.delete_color_instruction = Color(*self.delete_color)
+            self.delete_rect = RoundedRectangle(radius=[dp(0)], pos=self.pos, size=self.size)
+
+        self.edit_label = Label(
+            text="Edit",
+            size_hint=(None, None),
+            size=(dp(180), dp(30)),
+            color=(1, 1, 1, 1),
+        )
+        self.delete_label = Label(
+            text="Delete",
+            size_hint=(None, None),
+            size=(dp(180), dp(30)),
+            color=(1, 1, 1, 1),
+        )
+        self.add_widget(self.edit_label)
+        self.add_widget(self.delete_label)
+
+        self.bind(
+            pos=self.update_rect, size=self.update_rect,
+            edit_color=self.update_edit_color, delete_color=self.update_delete_color
+        )
+        self.update_rect()
+
+    def update_rect(self, *args):
+        self.edit_rect.pos = (self.x + dp(180), self.y)
+        self.edit_rect.size = (self.width - dp(180), self.height)
+        self.delete_rect.pos = (self.x, self.y)
+        self.delete_rect.size = (self.width - dp(180), self.height)
+        self.edit_label.center = (self.edit_rect.pos[0] + self.edit_rect.size[0] / 2, self.y + self.height / 2)
+        self.delete_label.center = (self.x + self.delete_rect.size[0] / 2, self.y + self.height / 2)
+
+    def update_edit_color(self, instance, value):
+        self.edit_color_instruction.rgba = value
+
+    def update_delete_color(self, instance, value):
+        self.delete_color_instruction.rgba = value
+
+
 class EntryRow(FloatLayout):
     timestamp_text = StringProperty("")
     category_text = StringProperty("")
@@ -16,31 +68,20 @@ class EntryRow(FloatLayout):
     index = NumericProperty(0)
 
     category_color = ListProperty([0.30, 0.45, 0.32, 1])
-    edit_color = ListProperty([1, 1, 0, 1])
-    delete_color = ListProperty([1, 0, 0, 1])
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.size_hint_y = None
         self.height = dp(70)
 
-        with self.canvas.before:
-            self.edit_color_instruction = Color(*self.edit_color)
-            self.edit_rect = RoundedRectangle(
-                radius=[dp(0)],
-                pos=(dp(360), self.y),
-                size=(dp(180), self.height)
-            )
+        self.background = EntryRowBackground(
+            size_hint=(None, None),
+            pos=self.pos,
+            size=self.size
+        )
+        self.add_widget(self.background)
 
-        with self.canvas.before:
-            self.delete_color_instruction = Color(*self.delete_color)
-            self.delete_rect = RoundedRectangle(
-                radius=[dp(0)],
-                pos=self.pos,
-                size=(dp(180), self.height)
-            )
-
-        with self.canvas.before:
+        with self.canvas:
             self.bg_color_instruction = Color(*self.category_color)
             self.bg_rect = RoundedRectangle(
                 radius=[dp(10)],
@@ -48,7 +89,7 @@ class EntryRow(FloatLayout):
                 size=self.size
             )
 
-        self.bind(pos=self.update_rect, size=self.update_rect, edit_color=self.update_edit_color, delete_color=self.update_delete_color,category_color=self.update_color)
+        self.bind(pos=self.update_rect, size=self.update_rect, category_color=self.update_color)
 
         ## TIMESTAMP (TOP-LEFT) ##
 
@@ -140,22 +181,14 @@ class EntryRow(FloatLayout):
         self.add_widget(self.delete_btn)
 
     def update_rect(self, *args):
-        self.edit_rect.pos = (self.x + dp(180), self.y)
-        self.edit_rect.size = (self.width - dp(180), self.height)
-        self.delete_rect.pos = (self.x, self.y)
-        self.delete_rect.size = (self.width - dp(180), self.height)
+        self.background.pos = self.pos
+        self.background.size = self.size
         self.bg_rect.pos = (self.x, self.y)
         self.bg_rect.size = (self.width, self.height)
 
     def update_color(self, instance, value):
         self.bg_color_instruction.rgba = value
         self.timestamp_label.color = self.category_label.color = self.note_label.color = self.amount_label.color = contrast_color(value)
-
-    def update_edit_color(self, instance, value):
-        self.edit_color_instruction.rgba = value
-
-    def update_delete_color(self, instance, value):
-        self.delete_color_instructions.rgba = value
 
     def on_delete_pressed(self, instance):
         App.get_running_app().delete_entry(self.index)
