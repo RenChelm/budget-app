@@ -42,7 +42,7 @@ class EditTransactionPopup(Popup):
             text=existing_cat["name"] if isinstance(existing_cat, dict) else "Uncategorized",
             background_normal="",
             background_color=existing_cat["color"] if isinstance(existing_cat, dict) else (0.6, 0.6, 0.6, 1),
-            color=contrast_color(existing_cat["color"]),
+            color=contrast_color(existing_cat["color"]) if isinstance(existing_cat, dict) else (1, 1, 1, 1),
             size_hint=(1, 0.3)
         )
 

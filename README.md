@@ -55,6 +55,15 @@ python3 main.py
 
 The app will open in a window sized to simulate a mobile screen (360x800).
 
+## Running Tests
+
+The test suite uses `pytest` and drives real Kivy widgets (touch simulation, widget construction), so it needs a display/GL context available (works out of the box on desktop Linux, macOS, Windows, and WSLg).
+
+```bash
+pip install pytest
+pytest
+```
+
 ## Building for Android
 
 This project is configured for **Buildozer** with a custom local p4a recipe to ensure compatibility with NDK r25b. To generate an APK:
@@ -82,6 +91,7 @@ Key build configuration:
 - `ui/colors_utils.py`: Self contained function that handles luminance-based font color for categories to improve text visibility.
 - `ui/edit_transaction_popup.py`: Self contained class that handles transaction editing.
 - `ui/entry_row.py`: Self contained class that handles transaction entry rows.
+- `tests/`: `pytest` test suite covering `main.py` and `ui/`.
 - `buildozer.spec`: Buildozer configuration for Android deployment.
 - `p4a_recipes/cython/`: Local p4a recipe overriding Cython to 3.0.10 for NDK r25b compatibility.
 - `assets/images/icon.png`: Application icon (WIP).

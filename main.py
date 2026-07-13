@@ -101,7 +101,8 @@ class BudgetApp(App):
 
         self.rv = RecycleView(
             size_hint=(1, 0.7),
-            pos_hint={"center_y": 0.63}
+            pos_hint={"center_y": 0.63},
+            do_scroll_x=False
         )   
 
         layout = RecycleBoxLayout(
@@ -289,6 +290,12 @@ class BudgetApp(App):
             size_hint=(0.6, 0.3)
         )
         popup.open()
+
+    ## RESET SWIPE - METHOD ##
+
+    def reset_swipe(self, *args):
+        Animation.cancel_all(self, "swipe_x")
+        self.swipe_x = 0
 
     ## UPDATE DISPLAY - METHOD ##
 

@@ -42,4 +42,7 @@ build/
 *.swp
 *.swo
 
+# Test artifacts
+.pytest_cache/
+
 SWIPE_TO_EDIT.md
