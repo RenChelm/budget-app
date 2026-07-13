@@ -85,7 +85,7 @@ class EntryRowContent(FloatLayout):
             text="",
             size_hint=(None, None),
             size=(dp(180), dp(30)),
-            pos_hint={"x": 0.00, "y": 0.60},
+            pos_hint={"x": 0.00, "y": 0.50},
             halign="left",
             valign="middle",
             color=contrast_color(self.category_color)
@@ -98,21 +98,21 @@ class EntryRowContent(FloatLayout):
             text="",
             size_hint=(None, None),
             size=(dp(180), dp(30)),
-            pos_hint={"x": 0.00, "y": 0.20},
+            pos_hint={"x": 0.00, "y": 0.10},
             halign="left",
             valign="middle",
             color=contrast_color(self.category_color)
         )
         self.category_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
 
-        ## NOTE (MIDDLE) ##
+        ## NOTE (BOTTOM-RIGHT) ##
 
         self.note_label = Label(
             text="",
             size_hint=(None, None),
-            size=(dp(180), dp(30)),
-            pos_hint={"x": 0.25, "y": 0.20},
-            halign="left",
+            size=(dp(130), dp(30)),
+            pos_hint={"right": 0.95, "y": 0.10},
+            halign="right",
             valign="middle",
             color=contrast_color(self.category_color)
         )
@@ -123,8 +123,8 @@ class EntryRowContent(FloatLayout):
         self.amount_label = Label(
             text="",
             size_hint=(None, None),
-            size=(dp(100), dp(30)),
-            pos_hint={"right": 0.95, "y": 0.60},
+            size=(dp(130), dp(30)),
+            pos_hint={"right": 0.95, "y": 0.50},
             halign="right",
             valign="middle",
             color=contrast_color(self.category_color)
