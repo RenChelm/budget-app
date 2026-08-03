@@ -37,7 +37,11 @@ version = 0.3
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3, kivy==2.3.1, android, sdl2, pyjnius, setuptools, cython
+# filetype is a hard runtime dependency of kivy 2.3.1 (kivy/core/image/__init__.py
+# does `from filetype import guess_extension` at import time). p4a's kivy recipe is
+# pinned to 2.3.0, which predates that dependency, so pinning kivy==2.3.1 above does
+# not pull it in -- it must be listed explicitly or the app crashes on startup.
+requirements = python3, kivy==2.3.1, filetype==1.2.0, android, sdl2, pyjnius, setuptools, cython
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
