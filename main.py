@@ -291,12 +291,6 @@ class BudgetApp(App):
         )
         popup.open()
 
-    ## RESET SWIPE - METHOD ##
-
-    def reset_swipe(self, *args):
-        Animation.cancel_all(self, "swipe_x")
-        self.swipe_x = 0
-
     ## UPDATE DISPLAY - METHOD ##
 
     def update_display(self):

@@ -29,7 +29,7 @@ source.exclude_dirs = tests, bin, kivyenv
 #source.exclude_patterns = license,images/*/*.jpg
 
 # (str) Application versioning (method 1)
-version = 0.1
+version = 0.3
 
 # (str) Application versioning (method 2)
 # version.regex = __version__ = ['"](.*)['"]
@@ -47,7 +47,7 @@ requirements = python3, kivy==2.3.1, android, sdl2, pyjnius, setuptools, cython
 # presplash.filename = assets/icon.png
 
 # (str) Icon of the application
-# icon.filename = assets/icon.png
+icon.filename = %(source.dir)s/assets/images/icon.png
 
 # (list) Supported orientations
 # Valid options are: landscape, portrait, portrait-reverse or landscape-reverse
@@ -318,8 +318,12 @@ android.allow_backup = True
 #p4a.fork = kivy
 
 # (str) python-for-android branch to use, defaults to master
-p4a.branch = master
-p4a.commit = 58d21141f17c889bf8585f5665921d72028f8831
+# Must be a real branch, not a tag: a tag clone leaves p4a on a detached HEAD,
+# buildozer's staleness check (`git branch -vv` -> split()[1]) then never matches,
+# and it deletes + re-clones python-for-android on every build.
+# The v2024.01.21 release is pinned via p4a.commit below instead.
+p4a.branch = develop
+p4a.commit = 957a3e5f8c270f7aa648ba185e5a68c1077a798d
 
 # (str) python-for-android specific commit to use, defaults to HEAD, must be within p4a.branch
 #p4a.commit = HEAD

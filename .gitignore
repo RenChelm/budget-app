@@ -23,7 +23,7 @@ __pycache__/
 
 # Logs
 *.log
-build_output.txt
+build_*.txt
 
 # OS-specific junk
 .DS_Store
