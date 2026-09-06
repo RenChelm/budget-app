@@ -2,7 +2,7 @@ from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
-from kivy.graphics import Color, RoundedRectangle
+from kivy.graphics import Color, RoundedRectangle, Line
 from kivy.properties import StringProperty, NumericProperty, ListProperty
 from kivy.metrics import dp, sp
 from kivy.animation import Animation
@@ -12,6 +12,8 @@ from ui.color_utils import contrast_color
 SWIPE_REVEAL_WIDTH = dp(180)
 SWIPE_LOCK_DISTANCE = dp(10)    # movement needed before we commit to horizontal vs vertical
 SWIPE_OPEN_THRESHOLD = dp(90)   # drag past this far before release snaps fully open
+BORDER_WIDTH = dp(1.1)
+BORDER_RADIUS = dp(10)
 
 class EntryRowBackground(FloatLayout):
     edit_color = ListProperty([1, 1, 0, 1])
@@ -21,12 +23,15 @@ class EntryRowBackground(FloatLayout):
         super().__init__(**kwargs)
 
         with self.canvas.before:
-            self.edit_color_instruction = Color(*self.edit_color)
-            self.edit_rect = RoundedRectangle(radius=[dp(10)], pos=self.pos, size=self.size)
-
-        with self.canvas.before:
             self.delete_color_instruction = Color(*self.delete_color)
-            self.delete_rect = RoundedRectangle(radius=[dp(10)], pos=self.pos, size=self.size)
+            self.delete_rect = RoundedRectangle(radius=[BORDER_RADIUS], pos=self.pos, size=self.size)
+            Color(0, 0, 0, 1)
+            self.delete_border = Line(width=BORDER_WIDTH)
+
+            self.edit_color_instruction = Color(*self.edit_color)
+            self.edit_rect = RoundedRectangle(radius=[BORDER_RADIUS], pos=self.pos, size=self.size)
+            Color(0, 0, 0, 1)
+            self.edit_border = Line(width=BORDER_WIDTH)
 
         self.edit_label = Label(
             text="Edit",
@@ -50,12 +55,20 @@ class EntryRowBackground(FloatLayout):
         self.update_rect()
 
     def update_rect(self, *args):
-        self.edit_rect.pos = (self.x + SWIPE_REVEAL_WIDTH, self.y)
-        self.edit_rect.size = (self.width - SWIPE_REVEAL_WIDTH, self.height)
         self.delete_rect.pos = (self.x, self.y)
-        self.delete_rect.size = (self.width - SWIPE_REVEAL_WIDTH, self.height)
-        self.edit_label.center = (self.edit_rect.pos[0] + self.edit_rect.size[0] / 2, self.y + self.height / 2)
-        self.delete_label.center = (self.x + self.delete_rect.size[0] / 2, self.y + self.height / 2)
+        self.delete_rect.size = (SWIPE_REVEAL_WIDTH, self.height)
+        self.delete_border.rounded_rectangle = (
+            self.x, self.y, SWIPE_REVEAL_WIDTH, self.height, BORDER_RADIUS
+        )
+
+        self.edit_rect.pos = (self.right - SWIPE_REVEAL_WIDTH, self.y)
+        self.edit_rect.size = (SWIPE_REVEAL_WIDTH, self.height)
+        self.edit_border.rounded_rectangle = (
+            self.right - SWIPE_REVEAL_WIDTH, self.y, SWIPE_REVEAL_WIDTH, self.height, BORDER_RADIUS
+        )
+
+        self.delete_label.center = (self.x + SWIPE_REVEAL_WIDTH / 2, self.center_y)
+        self.edit_label.center = (self.right - SWIPE_REVEAL_WIDTH / 2, self.center_y)
 
     def update_edit_color(self, instance, value):
         self.edit_color_instruction.rgba = value
@@ -72,9 +85,14 @@ class EntryRowContent(FloatLayout):
         with self.canvas:
             self.bg_color_instruction = Color(*self.category_color)
             self.bg_rect = RoundedRectangle(
-                radius=[dp(10)],
+                radius=[BORDER_RADIUS],
                 pos=self.pos,
                 size=self.size
+            )
+            Color(0, 0, 0, 1)
+            self.border_line = Line(
+                rounded_rectangle=(self.x, self.y, self.width, self.height, BORDER_RADIUS),
+                width=BORDER_WIDTH,
             )
         
         self.bind(pos=self.update_rect, size=self.update_rect, category_color=self.update_color)
@@ -139,6 +157,7 @@ class EntryRowContent(FloatLayout):
     def update_rect(self, *args):
         self.bg_rect.pos = (self.x, self.y)
         self.bg_rect.size = (self.width, self.height)
+        self.border_line.rounded_rectangle = (self.x, self.y, self.width, self.height, BORDER_RADIUS)
 
     def update_color(self, instance, value):
         self.bg_color_instruction.rgba = value

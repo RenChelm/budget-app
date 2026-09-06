@@ -3,7 +3,12 @@ import pytest
 from kivy.app import App
 from kivy.tests.common import UnitTestTouch
 
-from ui.entry_row import EntryRow, SWIPE_LOCK_DISTANCE, SWIPE_OPEN_THRESHOLD
+from ui.entry_row import (
+    EntryRow,
+    SWIPE_LOCK_DISTANCE,
+    SWIPE_OPEN_THRESHOLD,
+    SWIPE_REVEAL_WIDTH,
+)
 
 
 @pytest.fixture
@@ -146,3 +151,48 @@ def test_on_delete_pressed_deletes_entry(entry_row):
     entry_row.on_delete_pressed(entry_row)
 
     assert calls == [3]
+
+
+## REVEAL PANEL GEOMETRY ##
+#
+# The panels behind the row are what a swipe uncovers, so each must be exactly
+# as wide as the row can travel (max_swipe) regardless of the row's own width.
+# Their black outlines are drawn from these same values, but Kivy's
+# Line.rounded_rectangle is write-only, so the rects are what we can assert on.
+
+@pytest.mark.parametrize("width", [300, 360, 500, 900])
+def test_reveal_panels_are_one_reveal_width_at_any_row_width(entry_row, width):
+    bg = entry_row.background
+    bg.size = (width, 70)
+
+    assert bg.delete_rect.size[0] == SWIPE_REVEAL_WIDTH
+    assert bg.edit_rect.size[0] == SWIPE_REVEAL_WIDTH
+
+
+def test_reveal_panels_anchor_to_opposite_edges(entry_row):
+    bg = entry_row.background
+    bg.pos = (40, 10)
+    bg.size = (500, 70)
+
+    # delete is revealed by swiping right, so it sits against the left edge
+    assert bg.delete_rect.pos == (40, 10)
+    # edit is revealed by swiping left, so it sits against the right edge
+    assert bg.edit_rect.pos == (540 - SWIPE_REVEAL_WIDTH, 10)
+
+
+def test_reveal_labels_centre_inside_their_panels(entry_row):
+    bg = entry_row.background
+    bg.pos = (0, 0)
+    bg.size = (500, 70)
+
+    assert list(bg.delete_label.center) == [SWIPE_REVEAL_WIDTH / 2, 35]
+    assert list(bg.edit_label.center) == [500 - SWIPE_REVEAL_WIDTH / 2, 35]
+
+
+def test_content_background_tracks_full_row(entry_row):
+    content = entry_row.content
+    content.pos = (0, 0)
+    content.size = (500, 70)
+
+    assert content.bg_rect.pos == (0, 0)
+    assert content.bg_rect.size == (500, 70)
