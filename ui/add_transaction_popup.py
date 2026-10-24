@@ -9,10 +9,11 @@ from kivy.metrics import dp
 from datetime import datetime
 
 from ui.category_select_popup import CategorySelectPopup
+from ui.date_input import DateInput
 from ui.number_input import NumberInput
 
 class AddTransactionPopup(Popup):
-    def __init__(self, app, **kwargs):
+    def __init__(self, app, day=None, **kwargs):
         super().__init__(**kwargs)
         self.app = app
         self.app.selected_category = None
@@ -25,7 +26,15 @@ class AddTransactionPopup(Popup):
             height=dp(40)
         )
 
-        self.category_btn = Button(text="Select Category", size_hint=(1, 0.3), color=(1, 1, 1, 1))
+        # Blank means now; `day` pre-fills it when adding to a past week #
+        self.date_input_box = DateInput(
+            day=day,
+            hint_text="Enter Date (blank = now)",
+            size_hint_y=None,
+            height=dp(40)
+        )
+
+        self.category_btn = Button(text="Select Category", size_hint=(1, None), height=dp(44), color=(1, 1, 1, 1))
 
         self.note_input_box = TextInput(
             hint_text="Enter Note (Optional)",
@@ -33,13 +42,14 @@ class AddTransactionPopup(Popup):
             size_hint_y=None,
             height=dp(40)
         )
-        
+
         self.category_btn.bind(on_release=lambda x: self.open_category_window())
 
-        save_btn = Button(text="Save", size_hint=(1, 0.3), color=(1, 1, 1, 1))
+        save_btn = Button(text="Save", size_hint=(1, None), height=dp(44), color=(1, 1, 1, 1))
         save_btn.bind(on_release=lambda x: self.save_text())
 
         layout.add_widget(self.amount_input_box)
+        layout.add_widget(self.date_input_box)
         layout.add_widget(self.category_btn)
         layout.add_widget(self.note_input_box)
         layout.add_widget(save_btn)
@@ -47,7 +57,8 @@ class AddTransactionPopup(Popup):
         self.title = "Add Transaction"
         self.title_color = (1, 1, 1, 1)
         self.content = layout
-        self.size_hint = (0.8, 0.3)
+        self.size_hint = (0.8, None)
+        self.height = dp(330)
 
     def open_category_window(self):
         CategorySelectPopup(self.app, self.category_btn).open()
@@ -61,11 +72,21 @@ class AddTransactionPopup(Popup):
             self.app.show_error("Please enter a valid number.")
             return
 
+        try:
+            day = self.date_input_box.parse_day()
+        except ValueError as error:
+            self.app.show_error(str(error))
+            return
+
+        # A picked day keeps the current time of day #
+        now = datetime.now()
+        timestamp = datetime.combine(day, now.time()) if day else now
+
         value_note = self.note_input_box.text.strip()
 
         entry = {
             "amount": amount,
-            "timestamp": datetime.now(),
+            "timestamp": timestamp,
             "category": getattr(self.app, "selected_category", None),
             "note": value_note if value_note else None
         }
@@ -76,4 +97,5 @@ class AddTransactionPopup(Popup):
             json.dump(self.app.saved_amounts, f, default=str)
 
         self.app.update_display()
+        self.app.show_week_of(timestamp)
         self.dismiss()

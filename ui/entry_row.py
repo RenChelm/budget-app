@@ -106,9 +106,7 @@ class EntryRow(ButtonBehavior, FloatLayout):
         )
 
     def on_release(self):
-        # The "no transactions" placeholder row has no entry behind it #
-        if self.index >= 0:
-            App.get_running_app().open_edit_window(self.index)
+        App.get_running_app().open_edit_window(self.index)
 
     def update_rect(self, *args):
         self.bg_rect.pos = (self.x, self.y)

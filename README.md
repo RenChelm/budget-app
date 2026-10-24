@@ -4,7 +4,8 @@ A mobile-friendly personal finance tracker built with **Python** and the **Kivy 
 
 ## Features
 
-- **Transaction Management**: Add transactions, and tap any transaction to edit or delete it. Amount fields open the number pad on Android.
+- **Transaction Management**: Add transactions to the week you're viewing, including past weeks you missed, and tap any transaction to edit or delete it. Amount fields open the number pad on Android.
+- **Transaction Dates**: Pick the date a transaction happened with Android's date picker, or leave it blank to use the current time. Dates can be changed when editing.
 - **Weekly Transactions View**: The main page shows the current week's transactions. Swipe sideways (or tap the arrows) to move between the 4 weeks of the current budget period.
 - **Custom Categories**: Group expenses by creating custom persistent categories with several color options.
 - **Custom Notes**: Further specify transactions by adding transaction specific notes.

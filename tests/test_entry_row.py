@@ -67,11 +67,3 @@ def test_tap_opens_edit_window_for_its_entry(entry_row):
 
     assert stub.edited == [7]
 
-
-def test_tapping_placeholder_row_does_nothing(entry_row):
-    App._running_app = stub = StubApp()
-    entry_row.index = -1
-
-    entry_row.dispatch("on_release")
-
-    assert stub.edited == []

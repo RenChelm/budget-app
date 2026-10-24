@@ -97,18 +97,12 @@ def test_delete_entry_ignores_out_of_range_index(app, bad_index):
 
 ## UPDATE DISPLAY ##
 
-def test_update_display_shows_placeholder_when_empty(app):
+def test_empty_week_shows_message_without_a_row(app):
     app.saved_amounts = []
     app.update_display()
 
-    assert current_page(app).rv.data == [{
-        "timestamp_text": "No transactions yet.",
-        "category_text": "",
-        "amount_text": "",
-        "note_text": "",
-        "index": -1,
-        "category_color": [0.30, 0.45, 0.32, 1],
-    }]
+    assert current_page(app).rv.data == []
+    assert current_page(app).empty_label.text == "No transactions yet."
     assert app.spent_label.text == "Spent: $0.00"
     assert app.trans_label.text == "Transactions: 0"
     assert app.left_label.text == "No weekly max set"
@@ -134,6 +128,7 @@ def test_update_display_sorts_newest_first_and_formats_rows(app):
     assert rows[1]["index"] == 0
     assert rows[1]["category_text"] == "Food"
     assert rows[1]["category_color"] == food["color"]
+    assert current_page(app).empty_label.text == ""
 
     assert app.spent_label.text == "Spent: $17.50"
     assert app.trans_label.text == "Transactions: 2"
@@ -383,11 +378,12 @@ def test_each_week_page_lists_only_its_own_transactions(app):
     assert [row["amount_text"] for row in second.rv.data] == ["$3.00", "$2.00"]
 
 
-def test_upcoming_week_placeholder(app):
+def test_upcoming_week_message(app):
     last = app.week_carousel.slides[-1]
     last.refresh(app, last.start - timedelta(days=1))
 
-    assert last.rv.data[0]["timestamp_text"] == "Week hasn't started."
+    assert last.rv.data == []
+    assert last.empty_label.text == "Week hasn't started."
     assert last.title_label.text.startswith("Week 4 · ")
 
 
@@ -408,18 +404,47 @@ def test_info_panel_follows_the_week_being_viewed(app):
     assert app.left_label.text == "Left: $30.00"
 
 
-def test_add_button_jumps_to_current_week(app, monkeypatch):
+@pytest.fixture
+def opened_add_popups(monkeypatch):
     import main
 
     opened = []
-    monkeypatch.setattr(main, "AddTransactionPopup", lambda app: type("Stub", (), {"open": lambda self: opened.append(True)})())
+    stub = type("Stub", (), {"open": lambda self: None})
+    monkeypatch.setattr(main, "AddTransactionPopup", lambda app, day=None: opened.append(day) or stub())
+    return opened
+
+
+def test_add_on_current_week_leaves_date_blank(app, opened_add_popups):
     current = app.week_carousel.index
-    app.week_carousel.index = (current + 1) % 4
 
     app.open_transaction_window(None)
 
+    assert opened_add_popups == [None]
     assert app.week_carousel.index == current
-    assert opened == [True]
+
+
+def test_add_on_past_week_prefills_its_first_day_and_stays_there(app, opened_add_popups):
+    app.week_carousel.show_period(datetime(2026, 1, 1), datetime(2026, 2, 1))
+    app.week_carousel.index = 2
+
+    app.open_transaction_window(None)
+
+    assert opened_add_popups == [datetime(2026, 1, 15).date()]
+    assert app.week_carousel.index == 2
+
+
+def test_saving_a_transaction_shows_the_week_it_landed_in(app):
+    from ui.add_transaction_popup import AddTransactionPopup
+
+    first = app.week_carousel.slides[0]
+    app.week_carousel.index = 3
+
+    popup = AddTransactionPopup(app, day=first.start.date())
+    popup.amount_input_box.text = "8"
+    popup.save_text()
+
+    assert app.week_carousel.index == 0
+    assert [row["amount_text"] for row in first.rv.data] == ["$8.00"]
 
 
 def test_changing_start_day_rebuilds_week_pages(app):

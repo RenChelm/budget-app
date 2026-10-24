@@ -2,6 +2,7 @@ from datetime import datetime
 
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.carousel import Carousel
+from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.label import Label
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
@@ -35,7 +36,8 @@ class WeekTransactionsPage(BoxLayout):
 
         ## TRANSACTION LIST ##
 
-        self.rv = RecycleView(do_scroll_x=False)
+        body = FloatLayout()
+        self.rv = RecycleView(do_scroll_x=False, pos_hint={"x": 0, "y": 0})
 
         layout = RecycleBoxLayout(
             default_size=(None, None),
@@ -50,7 +52,17 @@ class WeekTransactionsPage(BoxLayout):
         self.rv.viewclass = EntryRow
         self.rv.data = []
 
-        self.add_widget(self.rv)
+        # Empty-week message sits straight on the background, not in a row #
+        self.empty_label = Label(
+            size_hint=(1, None),
+            height=dp(70),
+            pos_hint={"x": 0, "top": 1},
+            color=(1, 1, 1, 1)
+        )
+
+        body.add_widget(self.rv)
+        body.add_widget(self.empty_label)
+        self.add_widget(body)
 
     def _make_arrow(self, pointing, action, visible):
         # Hidden (not removed) on the first/last week so the title stays centered #
@@ -67,7 +79,12 @@ class WeekTransactionsPage(BoxLayout):
     def refresh(self, app, now):
         name = "This Week" if self.start <= now < self.end else f"Week {self.number}"
         self.title_label.text = f"{name} · {format_range(self.start, self.end)}"
-        self.rv.data = app.transaction_rows(self.start, self.end, upcoming=now < self.start)
+        self.rv.data = app.transaction_rows(self.start, self.end)
+
+        if self.rv.data:
+            self.empty_label.text = ""
+        else:
+            self.empty_label.text = "Week hasn't started." if now < self.start else "No transactions yet."
 
 ## THE 4 WEEKS OF ONE BUDGET PERIOD (SWIPE BETWEEN WEEKS) ##
 

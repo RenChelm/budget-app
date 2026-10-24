@@ -1,5 +1,7 @@
 import json
-from datetime import datetime
+from datetime import date, datetime, timedelta
+
+import pytest
 
 from ui.add_transaction_popup import AddTransactionPopup
 from ui.edit_transaction_popup import EditTransactionPopup
@@ -13,6 +15,7 @@ class FakeApp:
         self.errors = []
         self.update_display_calls = 0
         self.deleted = []
+        self.shown_weeks = []
 
     def show_error(self, message):
         self.errors.append(message)
@@ -22,6 +25,9 @@ class FakeApp:
 
     def delete_entry(self, index):
         self.deleted.append(index)
+
+    def show_week_of(self, moment):
+        self.shown_weeks.append(moment)
 
 
 ## ADD TRANSACTION ##
@@ -79,6 +85,57 @@ def test_constructing_popup_clears_previously_selected_category(tmp_path, kivy_w
     assert fake_app.selected_category is None
 
 
+def test_blank_date_saves_the_current_time(tmp_path, kivy_window):
+    fake_app = FakeApp(tmp_path)
+    popup = AddTransactionPopup(fake_app)
+    popup.amount_input_box.text = "5"
+
+    before = datetime.now()
+    popup.save_text()
+
+    timestamp = fake_app.saved_amounts[0]["timestamp"]
+    assert before <= timestamp <= datetime.now()
+    assert fake_app.shown_weeks == [timestamp]
+
+
+def test_picked_date_keeps_the_current_time_of_day(tmp_path, kivy_window):
+    fake_app = FakeApp(tmp_path)
+    popup = AddTransactionPopup(fake_app)
+    popup.amount_input_box.text = "5"
+    picked = date.today() - timedelta(days=9)
+    popup.date_input_box.set_day(picked)
+
+    before = datetime.now()
+    popup.save_text()
+
+    timestamp = fake_app.saved_amounts[0]["timestamp"]
+    assert timestamp.date() == picked
+    assert before.time() <= timestamp.time()
+    assert fake_app.shown_weeks == [timestamp]
+
+
+def test_add_popup_prefills_the_given_day(tmp_path, kivy_window):
+    popup = AddTransactionPopup(FakeApp(tmp_path), day=date(2026, 10, 1))
+
+    assert popup.date_input_box.parse_day() == date(2026, 10, 1)
+
+
+@pytest.mark.parametrize("text, error", [
+    ("not-a-date", "Please enter a valid date."),
+    ((date.today() + timedelta(days=1)).isoformat(), "Date can't be in the future."),
+])
+def test_save_text_rejects_bad_dates(tmp_path, kivy_window, text, error):
+    fake_app = FakeApp(tmp_path)
+    popup = AddTransactionPopup(fake_app)
+    popup.amount_input_box.text = "5"
+    popup.date_input_box.text = text
+
+    popup.save_text()
+
+    assert fake_app.saved_amounts == []
+    assert fake_app.errors == [error]
+
+
 ## EDIT TRANSACTION ##
 
 def test_save_edit_updates_amount_note_and_category(tmp_path, kivy_window):
@@ -126,6 +183,62 @@ def test_save_edit_blank_note_becomes_none(tmp_path, kivy_window):
     popup.save_edit(0, "10", "   ")
 
     assert fake_app.saved_amounts[0]["note"] is None
+
+
+def test_edit_popup_shows_the_entry_date(tmp_path, kivy_window):
+    fake_app = FakeApp(tmp_path)
+    fake_app.saved_amounts = [
+        {"amount": 5.0, "timestamp": datetime(2026, 9, 3, 18, 45), "category": None, "note": None}
+    ]
+
+    popup = EditTransactionPopup(fake_app, 0)
+
+    assert popup.date_input_box.parse_day() == date(2026, 9, 3)
+
+
+def test_save_edit_changes_date_and_keeps_time_of_day(tmp_path, kivy_window):
+    fake_app = FakeApp(tmp_path)
+    fake_app.saved_amounts = [
+        {"amount": 5.0, "timestamp": datetime(2026, 9, 3, 18, 45), "category": None, "note": None}
+    ]
+    popup = EditTransactionPopup(fake_app, 0)
+    popup.date_input_box.set_day(date(2026, 8, 30))
+
+    popup.save_edit(0, "5", "")
+
+    assert fake_app.saved_amounts[0]["timestamp"] == datetime(2026, 8, 30, 18, 45)
+    with open(fake_app.transactions_file) as f:
+        assert json.load(f)[0]["timestamp"] == "2026-08-30 18:45:00"
+
+
+def test_save_edit_blank_date_keeps_original_timestamp(tmp_path, kivy_window):
+    fake_app = FakeApp(tmp_path)
+    original = datetime(2026, 9, 3, 18, 45)
+    fake_app.saved_amounts = [
+        {"amount": 5.0, "timestamp": original, "category": None, "note": None}
+    ]
+    popup = EditTransactionPopup(fake_app, 0)
+    popup.date_input_box.text = ""
+
+    popup.save_edit(0, "5", "")
+
+    assert fake_app.saved_amounts[0]["timestamp"] == original
+
+
+def test_save_edit_rejects_invalid_date(tmp_path, kivy_window):
+    fake_app = FakeApp(tmp_path)
+    original = datetime(2026, 9, 3, 18, 45)
+    fake_app.saved_amounts = [
+        {"amount": 5.0, "timestamp": original, "category": None, "note": None}
+    ]
+    popup = EditTransactionPopup(fake_app, 0)
+    popup.date_input_box.text = "someday"
+
+    popup.save_edit(0, "7", "")
+
+    assert fake_app.saved_amounts[0] == {"amount": 5.0, "timestamp": original, "category": None, "note": None}
+    assert fake_app.errors == ["Please enter a valid date."]
+    assert fake_app.update_display_calls == 0
 
 
 def test_edit_popup_construction_with_uncategorized_entry(tmp_path, kivy_window):

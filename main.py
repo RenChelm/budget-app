@@ -352,6 +352,12 @@ class BudgetApp(App):
     def show_current_week(self, now=None):
         self.week_carousel.index = self.week_carousel.week_index_for(now or datetime.now())
 
+    def show_week_of(self, moment):
+        # The main page only holds the current period's weeks #
+        start, end = self.week_carousel.period
+        if start <= moment < end:
+            self.week_carousel.index = self.week_carousel.week_index_for(moment)
+
     def on_back_key(self, window, key, *args):
         # Android back button (Esc on desktop) steps back a screen instead of closing the app #
         if key == 27 and self.screen_manager.current != "main":
@@ -378,9 +384,10 @@ class BudgetApp(App):
     ## ADD TRANSACTION WINDOW - METHOD ##
     
     def open_transaction_window(self, instance):
-        # New transactions land in the current week, so show it #
-        self.show_current_week()
-        AddTransactionPopup(self).open()
+        # Adds to the week being viewed: a past week pre-fills its first day, otherwise blank means now #
+        page = self.week_carousel.current_slide
+        day = page.start.date() if page.end <= datetime.now() else None
+        AddTransactionPopup(self, day=day).open()
 
     ## CATEGORY SELECTION - METHOD ##
 
@@ -438,22 +445,12 @@ class BudgetApp(App):
 
     ## TRANSACTION ROWS - METHOD ##
 
-    def transaction_rows(self, start, end, upcoming=False):
+    def transaction_rows(self, start, end):
         indexed_entries = sorted(
             ((i, entry) for i, entry in enumerate(self.saved_amounts) if start <= entry["timestamp"] < end),
             key=self.sort_key,
             reverse=self.sort_descending
         )
-
-        if not indexed_entries:
-            return [{
-                "timestamp_text": "Week hasn't started." if upcoming else "No transactions yet.",
-                "category_text": "",
-                "amount_text": "",
-                "note_text": "",
-                "index": -1,
-                "category_color": [0.30, 0.45, 0.32, 1]
-            }]
 
         rows = []
         for original_index, sorted_entry in indexed_entries:
