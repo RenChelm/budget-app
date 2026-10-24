@@ -3,7 +3,6 @@ import json
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
-from kivy.uix.textinput import TextInput
 from kivy.metrics import dp
 
 from datetime import datetime
@@ -11,6 +10,7 @@ from datetime import datetime
 from ui.category_select_popup import CategorySelectPopup
 from ui.date_input import DateInput
 from ui.number_input import NumberInput
+from ui.text_box import TextBox
 from ui.color_utils import contrast_color
 
 class EditTransactionPopup(Popup):
@@ -39,7 +39,7 @@ class EditTransactionPopup(Popup):
 
         existing_cat = entry.get("category")
 
-        note_input_box = TextInput(
+        note_input_box = TextBox(
             hint_text="Enter Note (Optional)",
             multiline=False,
             size_hint_y=None,

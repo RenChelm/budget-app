@@ -1,6 +1,7 @@
 from kivy.clock import Clock
-from kivy.uix.textinput import TextInput
 from kivy.utils import platform
+
+from ui.text_box import TextBox
 
 # android.text.InputType flags #
 TYPE_CLASS_NUMBER = 2
@@ -8,7 +9,7 @@ TYPE_NUMBER_FLAG_DECIMAL = 8192
 
 ## NUMERIC TEXT INPUT (OPENS THE NUMBER PAD ON ANDROID) ##
 
-class NumberInput(TextInput):
+class NumberInput(TextBox):
     def __init__(self, decimal=True, **kwargs):
         super().__init__(
             input_type="number",

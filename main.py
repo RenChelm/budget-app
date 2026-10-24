@@ -37,6 +37,9 @@ from budget_periods import next_period_start, period_start, set_weekly_max, summ
 class BudgetApp(App):
     def build(self):
 
+        # Android moves the app up so the text box being typed in stays above the keyboard #
+        Window.softinput_mode = "below_target"
+
         self.saved_amounts = []
         self.saved_categories = []
         self.sort_by = "date"

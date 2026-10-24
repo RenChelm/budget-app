@@ -57,6 +57,12 @@ def test_build_handles_corrupt_transactions_json(tmp_path, kivy_window):
     assert instance.saved_amounts == []
 
 
+def test_keyboard_keeps_the_text_box_being_typed_in_visible(app):
+    from kivy.core.window import Window
+
+    assert Window.softinput_mode == "below_target"
+
+
 def test_build_handles_missing_files(tmp_path, kivy_window):
     from main import BudgetApp
 

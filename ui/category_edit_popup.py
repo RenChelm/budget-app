@@ -2,11 +2,11 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
-from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.metrics import dp
 
 from ui.color_utils import contrast_color
+from ui.text_box import TextBox
 
 PALETTE = [
     (0.9, 0.3, 0.3, 1),   # Red
@@ -39,7 +39,7 @@ class CategoryEditPopup(Popup):
 
         layout = BoxLayout(orientation="vertical", padding=dp(10), spacing=dp(8))
 
-        self.name_input = TextInput(
+        self.name_input = TextBox(
             text=existing_category["name"] if existing_category else initial_name,
             multiline=False,
             size_hint_y=None,
