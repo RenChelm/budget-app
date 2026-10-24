@@ -10,11 +10,11 @@ from ui.category_edit_popup import CategoryEditPopup
 from ui.color_utils import contrast_color
 
 DEFAULT_CATEGORIES = [
-    {"name": "Food",    "color": [1, 0.6, 0.2, 1]},
-    {"name": "Bills",   "color": [0.9, 0.35, 0.3, 1]},
-    {"name": "Rent",    "color": [0.6, 0.4, 0.9, 1]},
-    {"name": "Savings", "color": [0.3, 0.8, 0.4, 1]},
-    {"name": "Other",   "color": [0.6, 0.6, 0.6, 1]},
+    {"name": "Food",          "color": [1, 0.6, 0.2, 1]},
+    {"name": "Entertainment", "color": [0.6, 0.4, 0.9, 1]},
+    {"name": "Apparel",       "color": [0.9, 0.4, 0.7, 1]},
+    {"name": "Home Goods",    "color": [0.3, 0.6, 0.9, 1]},
+    {"name": "Other",         "color": [0.6, 0.6, 0.6, 1]},
 ]
 
 class CategorySelectPopup(Popup):

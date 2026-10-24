@@ -11,6 +11,23 @@ grep -n "ERROR\|Exception\|error:" <build-log-filename>.txt | tail -30
 ```
 - `grep -n` prints matching lines with their line numbers. `tail -30` limits output to the last 30 matches, since build errors typically appear near the end of the log.
 
+## Testing on the Android Emulator
+### One-time setup (Pixel 9 emulator, no Android Studio needed):
+```bash
+scripts/emulator/setup_emulator.sh
+scripts/emulator/install_desktop_launchers.sh
+```
+- Installs the emulator, adb and an Android 15 system image into `~/Android/Sdk` and creates a `Pixel_9` virtual device. Android Studio uses the same location, so it will see this device if installed later.
+- Adds a **Budget App (Emulator)** icon to the desktop and app menu.
+
+### Install and run the latest APK:
+```bash
+scripts/emulator/run_on_emulator.sh            # newest APK in bin/
+scripts/emulator/run_on_emulator.sh --build    # rebuild with buildozer first
+scripts/emulator/run_on_emulator.sh --fresh    # uninstall first (wipes saved data)
+```
+- Boots the emulator if needed, installs the APK, launches the app and streams the Python logs and tracebacks. Ctrl+C stops the logs; the emulator keeps running.
+
 ## Creating a Release
 ### Upload new release to github
 ```bash

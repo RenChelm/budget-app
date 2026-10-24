@@ -7,6 +7,7 @@ from kivy.uix.textinput import TextInput
 from kivy.metrics import dp
 
 from ui.category_select_popup import CategorySelectPopup
+from ui.number_input import NumberInput
 from ui.color_utils import contrast_color
 
 class EditTransactionPopup(Popup):
@@ -19,11 +20,9 @@ class EditTransactionPopup(Popup):
 
         self.app.selected_category = entry.get("category")
 
-        amount_input_box = TextInput(
+        self.amount_input_box = amount_input_box = NumberInput(
             text=str(entry["amount"]),
             hint_text="Enter Amount",
-            multiline=False,
-            input_filter="float",
             size_hint_y=None,
             height=dp(40)
         )
@@ -48,15 +47,27 @@ class EditTransactionPopup(Popup):
 
         category_btn.bind(on_release=lambda inst: self.open_category_window_for_edit(index, category_btn))
 
-        save_btn = Button(text="Save", size_hint=(1, 0.3), color=(1, 1, 1, 1))
+        save_btn = Button(text="Save", color=(1, 1, 1, 1))
         save_btn.bind(
             on_release=lambda inst: self.save_edit(index, amount_input_box.text, note_input_box.text)
         )
 
+        delete_btn = Button(
+            text="Delete",
+            background_normal="",
+            background_color=(0.8, 0.3, 0.3, 1),
+            color=(1, 1, 1, 1)
+        )
+        delete_btn.bind(on_release=lambda inst: self.delete(index))
+
+        btn_row = BoxLayout(size_hint=(1, 0.3), spacing=dp(10))
+        btn_row.add_widget(save_btn)
+        btn_row.add_widget(delete_btn)
+
         layout.add_widget(amount_input_box)
         layout.add_widget(category_btn)
         layout.add_widget(note_input_box)
-        layout.add_widget(save_btn)
+        layout.add_widget(btn_row)
 
         self.title = "Edit Transaction"
         self.title_color = (1, 1, 1, 1)
@@ -80,6 +91,10 @@ class EditTransactionPopup(Popup):
 
         self.app.update_display()
         self.dismiss()  
+
+    def delete(self, index):
+        self.app.delete_entry(index)
+        self.dismiss()
 
     def open_category_window_for_edit(self, index, category_btn):
         CategorySelectPopup(self.app, category_btn).open()

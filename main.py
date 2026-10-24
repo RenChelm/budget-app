@@ -6,6 +6,7 @@ Config.set('graphics', 'width', '360')
 Config.set('graphics', 'height', '800')
 
 from kivy.app import App
+from kivy.core.window import Window
 
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
@@ -13,28 +14,36 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.widget import Widget
-
-from kivy.uix.recycleview import RecycleView
-from kivy.uix.recycleboxlayout import RecycleBoxLayout
+from kivy.uix.screenmanager import ScreenManager, Screen
 
 from kivy.graphics import Color, Rectangle
 from kivy.metrics import dp, sp
 
 from datetime import datetime
 
-from ui.entry_row import EntryRow
 from ui.add_transaction_popup import AddTransactionPopup
 from ui.edit_transaction_popup import EditTransactionPopup
 from ui.category_select_popup import CategorySelectPopup
+from ui.sort_controls import SortControls
+from ui.menu_button import MenuButton
+from ui.history_screen import HistoryScreen
+from ui.week_carousel import WeekCarousel
+from ui.week_screen import WeekScreen
+from ui.budget_popup import BudgetPopup
 from ui.color_utils import contrast_color
+
+from budget_periods import next_period_start, period_start, set_weekly_max, summarize_week, weekly_max_for
 
 class BudgetApp(App):
     def build(self):
 
         self.saved_amounts = []
         self.saved_categories = []
+        self.sort_by = "date"
+        self.sort_descending = True
         self.transactions_file = os.path.join(self.user_data_dir, "transactions.json")
         self.categories_file = os.path.join(self.user_data_dir, "categories.json")
+        self.budget_file = os.path.join(self.user_data_dir, "budget.json")
 
         # Load saved entries from file #
         try:
@@ -63,6 +72,20 @@ class BudgetApp(App):
         except (FileNotFoundError, json.JSONDecodeError):
             self.saved_categories = []
 
+        # Defaults to calendar months with no weekly max until the user sets one #
+        self.budget_settings = {"start_day": 1, "weekly_max_history": []}
+        try:
+            with open(self.budget_file, "r") as f:
+                content = f.read().strip()
+                if content:
+                    self.budget_settings.update(json.loads(content))
+
+                    for change in self.budget_settings["weekly_max_history"]:
+                        if isinstance(change.get("from"), str):
+                            change["from"] = datetime.fromisoformat(change["from"])
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass
+
         root = BoxLayout(orientation="vertical")
 
         with root.canvas.before:
@@ -76,11 +99,7 @@ class BudgetApp(App):
 
         ## TOP BAR ##
 
-        top_bar = BoxLayout(
-            size_hint=(1, 0.1),
-            padding=dp(10),
-            spacing=dp(10)
-        )
+        top_bar = FloatLayout(size_hint=(1, 0.1))
 
         top_bar.canvas.before.clear()
         with top_bar.canvas.before:
@@ -91,7 +110,22 @@ class BudgetApp(App):
         top_bar.bind(pos = lambda i, v: setattr(self.top_rect, 'pos', i.pos),
                      size = lambda i, v: setattr(self.top_rect, 'size', i.size))
 
-        top_bar.add_widget(Label(text="Transactions", font_size=sp(24), color=(1, 1, 1, 1)))
+        # Title is its own layer so it stays centered on any screen width #
+        top_bar.add_widget(Label(
+            text="Transactions",
+            font_size=sp(20),
+            color=(1, 1, 1, 1),
+            pos_hint={"center_x": 0.5, "center_y": 0.5}
+        ))
+
+        top_bar_controls = BoxLayout(
+            pos_hint={"x": 0, "y": 0},
+            padding=[dp(6), dp(10)]
+        )
+        top_bar_controls.add_widget(SortControls(self, size_hint=(None, 1), width=dp(110)))
+        top_bar_controls.add_widget(Widget())  # Spacer #
+        top_bar_controls.add_widget(MenuButton(size_hint=(None, 1), width=dp(36)))
+        top_bar.add_widget(top_bar_controls)
 
         root.add_widget(top_bar)
 
@@ -99,27 +133,14 @@ class BudgetApp(App):
         
         main = FloatLayout()
 
-        self.rv = RecycleView(
+        # The weeks of the current budget period; swipe sideways to change week #
+        self.week_carousel = WeekCarousel(
+            self,
             size_hint=(1, 0.7),
-            pos_hint={"center_y": 0.63},
-            do_scroll_x=False
-        )   
-
-        layout = RecycleBoxLayout(
-            default_size=(None, None),
-            default_size_hint=(1, None),
-            size_hint=(1, None),
-            orientation='vertical'
+            pos_hint={"center_y": 0.63}
         )
-        layout.bind(minimum_height=layout.setter('height'))
-        
-        self.rv.add_widget(layout)
-        self.rv.layout_manager = layout
 
-        self.rv.viewclass = "EntryRow"
-        self.rv.data = []
-
-        main.add_widget(self.rv)
+        main.add_widget(self.week_carousel)
 
         ## BOTTOM DIVIDER ##
 
@@ -166,33 +187,67 @@ class BudgetApp(App):
             spacing=dp(5)
         )
 
-        ## BOTTOM LEFT CATEGORIES BUTTON ##
+        ## BOTTOM LEFT BUTTON CLUSTER ##
 
-        btn_categories = Button(
-            text="Categories",
+        btn_cluster_left = BoxLayout(
+            orientation="vertical",
+            size_hint=(None, None),
+            width=dp(90),
+            pos_hint={"x": 0.01, "y": 0.005},
+            spacing=dp(3)
+        )
+
+        ## VIEW HISTORY BUTTON ##
+
+        btn_history = Button(
+            text="View\nHistory",
             halign="center",
             valign="middle",
             background_normal="",
             background_color=(0.51765, 0.878, 0.737, 1),
             color=(0, 0, 0, 1),
-            size_hint=(None, None),
-            width=dp(90),
-            height=dp(185),
-            pos_hint={"x": 0.02, "y": 0.005},
-            on_release=lambda x: CategorySelectPopup(self).open()
+            size_hint=(1, None),
+            height=dp(91),
+            on_release=self.open_history
         )
 
-        btn_categories.text_size = btn_categories.size
-        btn_categories.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
-        main.add_widget(btn_categories)
+        ## VIEW BUDGET BUTTON ##
 
-        self.spent_label = Label(text="Total Spent: $0.00", halign="center", valign="middle", color=(1, 1, 1, 1))
+        btn_budget = Button(
+            text="View\nBudget",
+            halign="center",
+            valign="middle",
+            background_normal="",
+            background_color=(0.51765, 0.878, 0.737, 1),
+            color=(0, 0, 0, 1),
+            size_hint=(1, None),
+            height=dp(91),
+            on_release=lambda x: BudgetPopup(self).open()
+        )
+
+        # Center text #
+        btn_history.text_size = btn_history.size
+        btn_history.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
+        btn_budget.text_size = btn_budget.size
+        btn_budget.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
+
+        btn_cluster_left.add_widget(btn_history)
+        btn_cluster_left.add_widget(btn_budget)
+        main.add_widget(btn_cluster_left)
+
+        # Stats for whichever week is showing #
+        self.spent_label = Label(text="Spent: $0.00", halign="center", valign="middle", color=(1, 1, 1, 1))
         self.spent_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
-        self.trans_label = Label(text="Total Transactions: 0", halign="center", valign="middle", color=(1, 1, 1, 1))
+        self.left_label = Label(text="", halign="center", valign="middle", color=(1, 1, 1, 1))
+        self.left_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
+        self.trans_label = Label(text="Transactions: 0", halign="center", valign="middle", color=(1, 1, 1, 1))
         self.trans_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
 
         info_panel.add_widget(self.spent_label)
+        info_panel.add_widget(self.left_label)
         info_panel.add_widget(self.trans_label)
+
+        self.week_carousel.bind(index=lambda inst, val: self.update_info_panel())
 
         main.add_widget(info_panel)
 
@@ -220,38 +275,111 @@ class BudgetApp(App):
             on_release=self.open_transaction_window
         )
 
-        ## VIEW BUDGET BUTTON ##
+        ## CATEGORIES BUTTON ##
 
-        btn_budget = Button(
-            text="View\nBudget",
+        btn_categories = Button(
+            text="Categories",
             halign="center",
             valign="middle",
             background_normal="",
             background_color=(0.51765, 0.878, 0.737, 1),
             color=(0, 0, 0, 1),
             size_hint=(1, None),
-            height=dp(91)
+            height=dp(91),
+            on_release=lambda x: CategorySelectPopup(self).open()
         )
 
         # Center text #
         btn_add.text_size = btn_add.size
         btn_add.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
-        btn_budget.text_size = btn_budget.size
-        btn_budget.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
+        btn_categories.text_size = btn_categories.size
+        btn_categories.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
 
         btn_cluster.add_widget(btn_add)
-        btn_cluster.add_widget(btn_budget)
+        btn_cluster.add_widget(btn_categories)
         main.add_widget(btn_cluster)
 
         root.add_widget(main)
-        
+
+        ## SCREENS ##
+
+        self.screen_manager = ScreenManager()
+
+        main_screen = Screen(name="main")
+        main_screen.add_widget(root)
+        self.screen_manager.add_widget(main_screen)
+
+        self.history_screen = HistoryScreen(self, name="history")
+        self.screen_manager.add_widget(self.history_screen)
+
+        self.week_screen = WeekScreen(self, name="week")
+        self.screen_manager.add_widget(self.week_screen)
+
         self.update_display()
 
-        return root
+        return self.screen_manager
+
+    def on_start(self):
+        Window.bind(on_keyboard=self.on_back_key)
+
+    def on_resume(self):
+        # The app may have been in the background across a week boundary #
+        self.update_display()
+        self.show_current_week()
+
+    ## SCREEN NAVIGATION - METHODS ##
+
+    def go_to_screen(self, name, direction):
+        self.screen_manager.transition.direction = direction
+        self.screen_manager.current = name
+
+    def open_history(self, instance=None):
+        self.history_screen.refresh()
+        self.go_to_screen("history", "left")
+
+    def open_week(self, start, end, week_index):
+        self.week_screen.show_period(start, end, week_index)
+        self.go_to_screen("week", "left")
+
+    def show_history(self, *args):
+        # Returns to the period the week came from, not the current one #
+        self.history_screen.refresh(open_start=self.week_screen.carousel.period[0])
+        self.go_to_screen("history", "right")
+
+    def show_main(self, *args):
+        self.go_to_screen("main", "right")
+
+    def show_current_week(self, now=None):
+        self.week_carousel.index = self.week_carousel.week_index_for(now or datetime.now())
+
+    def on_back_key(self, window, key, *args):
+        # Android back button (Esc on desktop) steps back a screen instead of closing the app #
+        if key == 27 and self.screen_manager.current != "main":
+            self.screen_manager.current_screen.go_back()
+            return True
+        return False
+
+    ## BUDGET SETTINGS - METHOD ##
+
+    def update_budget(self, start_day, weekly_max, now=None):
+        self.budget_settings["start_day"] = start_day
+
+        # A new max applies from the current period on, leaving past periods' max as it was #
+        current_start = period_start(now or datetime.now(), start_day)
+        self.budget_settings["weekly_max_history"] = set_weekly_max(
+            self.budget_settings["weekly_max_history"], current_start, weekly_max
+        )
+
+        with open(self.budget_file, "w") as f:
+            json.dump(self.budget_settings, f, default=str)
+
+        self.update_display()
 
     ## ADD TRANSACTION WINDOW - METHOD ##
     
     def open_transaction_window(self, instance):
+        # New transactions land in the current week, so show it #
+        self.show_current_week()
         AddTransactionPopup(self).open()
 
     ## CATEGORY SELECTION - METHOD ##
@@ -291,27 +419,41 @@ class BudgetApp(App):
         )
         popup.open()
 
-    ## UPDATE DISPLAY - METHOD ##
+    ## SORTING - METHODS ##
 
-    def update_display(self):
-        if not self.saved_amounts:
-            self.rv.data = [{
-                "timestamp_text": "No entries yet.",
+    def sort_key(self, pair):
+        entry = pair[1]
+        if self.sort_by == "amount":
+            return (entry["amount"], entry["timestamp"])
+        return entry["timestamp"]
+
+    def set_sort_method(self, method):
+        self.sort_by = method
+        self.sort_descending = True
+        self.update_display()
+
+    def toggle_sort_order(self):
+        self.sort_descending = not self.sort_descending
+        self.update_display()
+
+    ## TRANSACTION ROWS - METHOD ##
+
+    def transaction_rows(self, start, end, upcoming=False):
+        indexed_entries = sorted(
+            ((i, entry) for i, entry in enumerate(self.saved_amounts) if start <= entry["timestamp"] < end),
+            key=self.sort_key,
+            reverse=self.sort_descending
+        )
+
+        if not indexed_entries:
+            return [{
+                "timestamp_text": "Week hasn't started." if upcoming else "No transactions yet.",
                 "category_text": "",
                 "amount_text": "",
                 "note_text": "",
                 "index": -1,
                 "category_color": [0.30, 0.45, 0.32, 1]
             }]
-            self.spent_label.text = "Total Spent: $0.00"
-            self.trans_label.text = "Total Transactions: 0"
-            return
-            
-        indexed_entries = sorted(
-            enumerate(self.saved_amounts),
-            key=lambda pair: pair[1]["timestamp"],
-            reverse=True
-        )
 
         rows = []
         for original_index, sorted_entry in indexed_entries:
@@ -330,14 +472,44 @@ class BudgetApp(App):
                 "category_color": color
             })
 
-        self.rv.data = rows
+        return rows
 
-        total_spent = sum(entry["amount"] for entry in self.saved_amounts)
-        total_transactions = len(self.saved_amounts)
+    ## UPDATE DISPLAY - METHODS ##
 
-        self.spent_label.text = f"Total Spent: ${total_spent:.2f}"
-        self.trans_label.text = f"Total Transactions: {total_transactions}"
+    def update_display(self):
+        now = datetime.now()
+        start_day = self.budget_settings["start_day"]
+        start = period_start(now, start_day)
+        end = next_period_start(start, start_day)
 
+        # Rebuild the week pages when a new period begins or the start day changes #
+        if self.week_carousel.period != (start, end):
+            self.week_carousel.show_period(start, end, now=now)
+        else:
+            self.week_carousel.refresh(now)
+
+        if self.week_screen.carousel.period is not None:
+            self.week_screen.carousel.refresh(now)
+
+        self.update_info_panel(now)
+
+    def update_info_panel(self, now=None):
+        page = self.week_carousel.current_slide
+        if page is None:
+            return
+
+        weekly_max = weekly_max_for(self.week_carousel.period[0], self.budget_settings["weekly_max_history"])
+        week = summarize_week(self.saved_amounts, page.start, page.end, weekly_max, now or datetime.now())
+
+        self.spent_label.text = f"Spent: ${week['spent']:.2f}"
+        self.trans_label.text = f"Transactions: {week['count']}"
+
+        if week["left"] is None:
+            self.left_label.text = "No weekly max set"
+        elif week["left"] < 0:
+            self.left_label.text = f"Over by: ${-week['left']:.2f}"
+        else:
+            self.left_label.text = f"Left: ${week['left']:.2f}"
 
 if __name__ == "__main__":
     BudgetApp().run()

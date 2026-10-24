@@ -9,6 +9,7 @@ from kivy.metrics import dp
 from datetime import datetime
 
 from ui.category_select_popup import CategorySelectPopup
+from ui.number_input import NumberInput
 
 class AddTransactionPopup(Popup):
     def __init__(self, app, **kwargs):
@@ -18,9 +19,8 @@ class AddTransactionPopup(Popup):
 
         layout = BoxLayout(orientation="vertical", padding=dp(10), spacing=dp(10))
 
-        self.amount_input_box = TextInput(
+        self.amount_input_box = NumberInput(
             hint_text="Enter Amount",
-            multiline=False,
             size_hint_y=None,
             height=dp(40)
         )

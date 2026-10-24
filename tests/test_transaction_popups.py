@@ -12,12 +12,16 @@ class FakeApp:
         self.selected_category = None
         self.errors = []
         self.update_display_calls = 0
+        self.deleted = []
 
     def show_error(self, message):
         self.errors.append(message)
 
     def update_display(self):
         self.update_display_calls += 1
+
+    def delete_entry(self, index):
+        self.deleted.append(index)
 
 
 ## ADD TRANSACTION ##
@@ -131,3 +135,31 @@ def test_edit_popup_construction_with_uncategorized_entry(tmp_path, kivy_window)
     ]
 
     EditTransactionPopup(fake_app, 0)
+
+
+def test_edit_popup_delete_button_deletes_entry(tmp_path, kivy_window):
+    from kivy.uix.button import Button
+
+    fake_app = FakeApp(tmp_path)
+    fake_app.saved_amounts = [
+        {"amount": 5.0, "timestamp": datetime.now(), "category": None, "note": None}
+    ]
+    popup = EditTransactionPopup(fake_app, 0)
+
+    delete_btn = next(w for w in popup.content.walk() if isinstance(w, Button) and w.text == "Delete")
+    delete_btn.dispatch("on_release")
+
+    assert fake_app.deleted == [0]
+
+
+## NUMBER PAD ##
+
+def test_amount_inputs_use_number_keyboard(tmp_path, kivy_window):
+    fake_app = FakeApp(tmp_path)
+    fake_app.saved_amounts = [
+        {"amount": 5.0, "timestamp": datetime.now(), "category": None, "note": None}
+    ]
+
+    for box in (AddTransactionPopup(fake_app).amount_input_box, EditTransactionPopup(fake_app, 0).amount_input_box):
+        assert box.input_type == "number"
+        assert box.input_filter == "float"

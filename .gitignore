@@ -46,3 +46,4 @@ build/
 .pytest_cache/
 
 SWIPE_TO_EDIT.md
+PATCH_NOTES.md
