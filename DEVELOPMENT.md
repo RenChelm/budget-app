@@ -42,3 +42,21 @@ gh release create v0.12 bin/budgetapp-0.12-arm64-v8a_armeabi-v7a-debug.apk \
 --title "v0.12 - Custom Categories" \
 --notes "Added the option to create custom categories. Refactored Entry Row layout for better maintainability."
 ```
+
+### Upload new release with notes from a markdown file
+```bash
+gh release create v<version-number> bin/<apk-filename>.apk \
+--title "<title>" \
+--notes-file <notes-filename>.md
+```
+- `--notes-file` (or `-F`) uses the whole file as the release description, and GitHub renders its markdown (headings, bullet lists, bold text). The file doesn't need to be committed, so a gitignored file like `PATCH_NOTES.md` works.
+- The file is published as-is, so first remove anything meant only for you, such as an "Unreleased" heading or notes about commits.
+- Add `--draft` to save the release without publishing it. Check how it looks on the repo's Releases page, then click **Publish release** there (or run `gh release edit v<version-number> --draft=false`).
+
+- Example:
+```bash
+gh release create v0.4 bin/budgetapp-0.4-arm64-v8a_armeabi-v7a-debug.apk \
+--title "v0.4 - Weekly Budgeting" \
+--notes-file PATCH_NOTES.md \
+--draft
+```
