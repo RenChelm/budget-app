@@ -5,6 +5,7 @@ from kivy.graphics import Color, RoundedRectangle, Line
 from kivy.metrics import dp, sp
 
 from budget_periods import format_range
+from ui.carry_over_button import CarryOverButton
 from ui.color_utils import contrast_color
 from ui.entry_row import BORDER_WIDTH, BORDER_RADIUS
 
@@ -15,13 +16,16 @@ CURRENT_BORDER_WIDTH = dp(2)
 OVER_BORDER_WIDTH = dp(3)
 BAR_HEIGHT = dp(6)
 BAR_INSET = dp(12)
+PILL_WIDTH = 0.55      # Share of the row; the bar shortens to make room #
+PILL_GAP = dp(8)
 
 class WeekRow(ButtonBehavior, FloatLayout):
-    def __init__(self, week, number, **kwargs):
+    def __init__(self, week, number, on_carry_over=None, **kwargs):
         super().__init__(**kwargs)
         self.size_hint_y = None
         self.height = dp(96)
         self.week = week
+        self.carry_btn = None
 
         status = week["status"]
         top = week["top_category"]
@@ -52,10 +56,16 @@ class WeekRow(ButtonBehavior, FloatLayout):
             Color(*border_color)
             self.border_line = Line(width=border_width)
 
-        ## PROGRESS BAR (SPENT VS WEEKLY MAX) ##
+        ## PROGRESS BAR (SPENT VS THIS WEEK'S BUDGET) ##
 
-        self.show_bar = week["weekly_max"] is not None and status != "upcoming"
-        self.bar_fraction = max(0, min(week["spent"] / week["weekly_max"], 1)) if self.show_bar else 0
+        # Subtracting an earlier overspend can leave no budget at all, which shows as a full bar #
+        self.show_bar = week["budget"] is not None and status != "upcoming"
+        if not self.show_bar:
+            self.bar_fraction = 0
+        elif week["budget"] <= 0:
+            self.bar_fraction = 1
+        else:
+            self.bar_fraction = max(0, min(week["spent"] / week["budget"], 1))
 
         if self.show_bar:
             with self.canvas.before:
@@ -104,6 +114,24 @@ class WeekRow(ButtonBehavior, FloatLayout):
 
         self.status_label = self._make_label(status_text, "right", {"right": 0.96, "y": 0.29}, font_size=sp(13))
 
+        ## ADD / SUBTRACT THIS WEEK'S AMOUNT ON NEXT WEEK (BESIDE THE BAR) ##
+        # In weekly mode, what was left (or overspent) this week can be added to (or subtracted from) next week #
+        # The amount is this week's own left/over status, so the button only says where it goes #
+
+        carry_over = week.get("carry_over")
+        if carry_over is not None and on_carry_over is not None:
+            self.carry_btn = CarryOverButton(
+                carry_over,
+                unit="week",
+                with_amount=False,
+                outline_color=text_color,
+                size_hint=(PILL_WIDTH, None),
+                height=dp(20),
+                pos_hint={"right": 0.96, "y": 0.0625}
+            )
+            self.carry_btn.bind(on_release=lambda inst: on_carry_over(week, not carry_over["carried"]))
+            self.add_widget(self.carry_btn)
+
     def _make_label(self, text, halign, pos_hint, font_size=sp(14), bold=False):
         label = Label(
             text=text,
@@ -130,6 +158,11 @@ class WeekRow(ButtonBehavior, FloatLayout):
         if self.show_bar:
             bar_width = self.width - 2 * BAR_INSET
             bar_pos = (self.x + BAR_INSET, self.y + dp(11))
+
+            # Lined up with the pill's middle, off the bottom border #
+            if self.carry_btn is not None:
+                bar_width = self.width * (0.96 - PILL_WIDTH) - PILL_GAP - BAR_INSET
+                bar_pos = (self.x + BAR_INSET, self.y + dp(13))
             self.bar_track.pos = bar_pos
             self.bar_track.size = (bar_width, BAR_HEIGHT)
             self.bar_fill.pos = bar_pos

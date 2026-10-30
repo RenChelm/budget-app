@@ -11,7 +11,7 @@ from ui.category_select_popup import CategorySelectPopup
 from ui.date_input import DateInput
 from ui.number_input import NumberInput
 from ui.text_box import TextBox
-from ui.color_utils import contrast_color
+from ui.color_utils import CONFIRM_COLOR, contrast_color
 
 class EditTransactionPopup(Popup):
     def __init__(self, app, index, **kwargs):
@@ -58,7 +58,12 @@ class EditTransactionPopup(Popup):
 
         category_btn.bind(on_release=lambda inst: self.open_category_window_for_edit(index, category_btn))
 
-        save_btn = Button(text="Save", color=(1, 1, 1, 1))
+        save_btn = Button(
+            text="Save",
+            background_normal="",
+            background_color=CONFIRM_COLOR,
+            color=(1, 1, 1, 1)
+        )
         save_btn.bind(
             on_release=lambda inst: self.save_edit(index, amount_input_box.text, note_input_box.text)
         )
@@ -72,8 +77,8 @@ class EditTransactionPopup(Popup):
         delete_btn.bind(on_release=lambda inst: self.delete(index))
 
         btn_row = BoxLayout(size_hint=(1, None), height=dp(44), spacing=dp(10))
-        btn_row.add_widget(save_btn)
         btn_row.add_widget(delete_btn)
+        btn_row.add_widget(save_btn)
 
         layout.add_widget(amount_input_box)
         layout.add_widget(self.date_input_box)

@@ -1,21 +1,21 @@
 from datetime import datetime
 
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.carousel import Carousel
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.label import Label
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.metrics import dp, sp
 
-from budget_periods import WEEKS_PER_PERIOD, format_range, period_weeks
+from budget_periods import format_range, period_weeks
 from ui.chevron_button import ChevronButton
 from ui.entry_row import EntryRow
+from ui.page_carousel import PageCarousel
 
 ## ONE WEEK OF TRANSACTIONS (HEADER STRIP + LIST) ##
 
 class WeekTransactionsPage(BoxLayout):
-    def __init__(self, carousel, number, start, end, **kwargs):
+    def __init__(self, carousel, number, count, start, end, **kwargs):
         super().__init__(orientation="vertical", **kwargs)
         self.number = number
         self.start = start
@@ -27,7 +27,7 @@ class WeekTransactionsPage(BoxLayout):
 
         self.prev_btn = self._make_arrow("left", carousel.load_previous, visible=number > 1)
         self.title_label = Label(font_size=sp(15), bold=True, color=(1, 1, 1, 1))
-        self.next_btn = self._make_arrow("right", carousel.load_next, visible=number < WEEKS_PER_PERIOD)
+        self.next_btn = self._make_arrow("right", carousel.load_next, visible=number < count)
 
         header.add_widget(self.prev_btn)
         header.add_widget(self.title_label)
@@ -86,12 +86,11 @@ class WeekTransactionsPage(BoxLayout):
         else:
             self.empty_label.text = "Week hasn't started." if now < self.start else "No transactions yet."
 
-## THE 4 WEEKS OF ONE BUDGET PERIOD (SWIPE BETWEEN WEEKS) ##
+## THE 4-5 WEEKS OF ONE BUDGET PERIOD (SWIPE BETWEEN WEEKS) ##
 
-class WeekCarousel(Carousel):
+class WeekCarousel(PageCarousel):
     def __init__(self, app, **kwargs):
-        # Mostly-vertical drags are handed to the list so it still scrolls #
-        super().__init__(direction="right", ignore_perpendicular_swipes=True, **kwargs)
+        super().__init__(**kwargs)
         self.app = app
         self.period = None
 
@@ -99,9 +98,10 @@ class WeekCarousel(Carousel):
         now = now or datetime.now()
         self.period = (start, end)
 
+        weeks = period_weeks(start, end)
         self.clear_widgets()
-        for number, (week_start, week_end) in enumerate(period_weeks(start, end), start=1):
-            self.add_widget(WeekTransactionsPage(self, number, week_start, week_end))
+        for number, (week_start, week_end) in enumerate(weeks, start=1):
+            self.add_widget(WeekTransactionsPage(self, number, len(weeks), week_start, week_end))
 
         self.refresh(now)
         self.index = week_index if week_index is not None else self.week_index_for(now)

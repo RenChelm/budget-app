@@ -30,9 +30,10 @@ from ui.history_screen import HistoryScreen
 from ui.week_carousel import WeekCarousel
 from ui.week_screen import WeekScreen
 from ui.budget_popup import BudgetPopup
+from ui.carry_over_popup import CarryOverPopup
 from ui.color_utils import contrast_color
 
-from budget_periods import next_period_start, period_start, set_weekly_max, summarize_week, weekly_max_for
+from budget_periods import pending_carry_over, period_bounds, set_carry_over, set_weekly_max, week_summary
 
 class BudgetApp(App):
     def build(self):
@@ -44,6 +45,7 @@ class BudgetApp(App):
         self.saved_categories = []
         self.sort_by = "date"
         self.sort_descending = True
+        self.carry_over_popup = None
         self.transactions_file = os.path.join(self.user_data_dir, "transactions.json")
         self.categories_file = os.path.join(self.user_data_dir, "categories.json")
         self.budget_file = os.path.join(self.user_data_dir, "budget.json")
@@ -76,16 +78,30 @@ class BudgetApp(App):
             self.saved_categories = []
 
         # Defaults to calendar months with no weekly max until the user sets one #
-        self.budget_settings = {"start_day": 1, "weekly_max_history": []}
+        # Weekly mode instead keeps every week 7 days, starting on `start_weekday` (0 = Monday) #
+        # `carry_overs` records each answer to moving a week's/period's leftover or overspend onto the next one #
+        self.budget_settings = {
+            "mode": "monthly",
+            "start_day": 1,
+            "start_weekday": 0,
+            "weekly_max_history": [],
+            "long_week_max_history": [],
+            "carry_overs": []
+        }
         try:
             with open(self.budget_file, "r") as f:
                 content = f.read().strip()
                 if content:
                     self.budget_settings.update(json.loads(content))
 
-                    for change in self.budget_settings["weekly_max_history"]:
+                    for change in self.budget_settings["weekly_max_history"] + self.budget_settings["long_week_max_history"]:
                         if isinstance(change.get("from"), str):
                             change["from"] = datetime.fromisoformat(change["from"])
+
+                    for choice in self.budget_settings["carry_overs"]:
+                        for key in ("start", "end"):
+                            if isinstance(choice.get(key), str):
+                                choice[key] = datetime.fromisoformat(choice[key])
         except (FileNotFoundError, json.JSONDecodeError):
             pass
 
@@ -324,11 +340,13 @@ class BudgetApp(App):
 
     def on_start(self):
         Window.bind(on_keyboard=self.on_back_key)
+        self.check_carry_over()
 
     def on_resume(self):
         # The app may have been in the background across a week boundary #
         self.update_display()
         self.show_current_week()
+        self.check_carry_over()
 
     ## SCREEN NAVIGATION - METHODS ##
 
@@ -368,21 +386,55 @@ class BudgetApp(App):
             return True
         return False
 
-    ## BUDGET SETTINGS - METHOD ##
+    ## BUDGET SETTINGS - METHODS ##
 
-    def update_budget(self, start_day, weekly_max, now=None):
-        self.budget_settings["start_day"] = start_day
+    def update_budget(self, changes, weekly_max, long_week_max=None, now=None):
+        # `changes` holds any of mode, start_day and start_weekday #
+        self.budget_settings.update(changes)
 
         # A new max applies from the current period on, leaving past periods' max as it was #
-        current_start = period_start(now or datetime.now(), start_day)
-        self.budget_settings["weekly_max_history"] = set_weekly_max(
-            self.budget_settings["weekly_max_history"], current_start, weekly_max
-        )
+        current_start = period_bounds(now or datetime.now(), self.budget_settings)[0]
+        for key, amount in (("weekly_max_history", weekly_max), ("long_week_max_history", long_week_max)):
+            self.budget_settings[key] = set_weekly_max(self.budget_settings[key], current_start, amount)
 
+        self.save_budget_settings()
+        self.update_display()
+
+    def save_budget_settings(self):
         with open(self.budget_file, "w") as f:
             json.dump(self.budget_settings, f, default=str)
 
+    ## CARRY-OVER - METHODS ##
+
+    def check_carry_over(self, now=None):
+        # Asks once whether to move what was left (or overspent) in the week/period that just ended onto the current one #
+        if self.carry_over_popup is not None:
+            return
+
+        pending = pending_carry_over(self.saved_amounts, self.budget_settings, now or datetime.now())
+        if pending is None:
+            return
+
+        self.carry_over_popup = CarryOverPopup(self, *pending, mode=self.budget_settings["mode"])
+        self.carry_over_popup.bind(on_dismiss=lambda inst: setattr(self, "carry_over_popup", None))
+        self.carry_over_popup.open()
+
+    def set_carry_over(self, span, carried):
+        # `span` is the finished week/period, with its leftover or overspend in `carry_over` #
+        self.budget_settings["carry_overs"] = set_carry_over(
+            self.budget_settings["carry_overs"],
+            self.budget_settings["mode"],
+            span["start"],
+            span["end"],
+            span["carry_over"]["over"],
+            carried
+        )
+        self.save_budget_settings()
         self.update_display()
+
+        # Later weeks' budgets build on this one, so History is redrawn on the page it was showing #
+        if self.screen_manager.current == "history":
+            self.history_screen.refresh(open_start=self.history_screen.carousel.current_slide.period["start"])
 
     ## ADD TRANSACTION WINDOW - METHOD ##
     
@@ -478,11 +530,9 @@ class BudgetApp(App):
 
     def update_display(self):
         now = datetime.now()
-        start_day = self.budget_settings["start_day"]
-        start = period_start(now, start_day)
-        end = next_period_start(start, start_day)
+        start, end = period_bounds(now, self.budget_settings)
 
-        # Rebuild the week pages when a new period begins or the start day changes #
+        # Rebuild the week pages when a new period begins or the budget settings change #
         if self.week_carousel.period != (start, end):
             self.week_carousel.show_period(start, end, now=now)
         else:
@@ -498,8 +548,9 @@ class BudgetApp(App):
         if page is None:
             return
 
-        weekly_max = weekly_max_for(self.week_carousel.period[0], self.budget_settings["weekly_max_history"])
-        week = summarize_week(self.saved_amounts, page.start, page.end, weekly_max, now or datetime.now())
+        week = week_summary(self.saved_amounts, self.budget_settings, page.start, now or datetime.now())
+        if week is None:
+            return
 
         self.spent_label.text = f"Spent: ${week['spent']:.2f}"
         self.trans_label.text = f"Transactions: {week['count']}"
@@ -510,6 +561,11 @@ class BudgetApp(App):
             self.left_label.text = f"Over by: ${-week['left']:.2f}"
         else:
             self.left_label.text = f"Left: ${week['left']:.2f}"
+
+        if week["carried_in"] > 0:
+            self.left_label.text += f"\n(${week['carried_in']:.2f} added)"
+        elif week["carried_in"] < 0:
+            self.left_label.text += f"\n(${-week['carried_in']:.2f} subtracted)"
 
 if __name__ == "__main__":
     BudgetApp().run()

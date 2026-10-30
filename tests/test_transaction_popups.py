@@ -265,6 +265,24 @@ def test_edit_popup_delete_button_deletes_entry(tmp_path, kivy_window):
     assert fake_app.deleted == [0]
 
 
+def test_edit_popup_has_delete_on_the_left_and_a_green_save_on_the_right(tmp_path, kivy_window):
+    from kivy.uix.button import Button
+    from ui.color_utils import CONFIRM_COLOR
+
+    fake_app = FakeApp(tmp_path)
+    fake_app.saved_amounts = [
+        {"amount": 5.0, "timestamp": datetime.now(), "category": None, "note": None}
+    ]
+    popup = EditTransactionPopup(fake_app, 0)
+
+    save_btn = next(w for w in popup.content.walk() if isinstance(w, Button) and w.text == "Save")
+    delete_btn = next(w for w in popup.content.walk() if isinstance(w, Button) and w.text == "Delete")
+
+    assert save_btn.parent is delete_btn.parent
+    assert save_btn.parent.children == [save_btn, delete_btn]     # Kivy lists children right to left #
+    assert tuple(save_btn.background_color) == CONFIRM_COLOR
+
+
 ## NUMBER PAD ##
 
 def test_amount_inputs_use_number_keyboard(tmp_path, kivy_window):

@@ -1,4 +1,4 @@
-from budget_periods import format_range
+from budget_periods import format_period
 from ui.back_screen import BackScreen
 from ui.week_carousel import WeekCarousel
 
@@ -12,7 +12,7 @@ class WeekScreen(BackScreen):
         self.layout.add_widget(self.carousel)
 
     def show_period(self, start, end, week_index):
-        self.title_label.text = format_range(start, end, with_year=True)
+        self.title_label.text = format_period(start, end, self.app.budget_settings["mode"], with_year=True)
         self.carousel.show_period(start, end, week_index)
 
     def go_back(self):
