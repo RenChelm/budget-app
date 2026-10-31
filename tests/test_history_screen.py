@@ -231,6 +231,8 @@ def test_refresh_builds_one_page_per_period_and_opens_on_current(kivy_window):
 
     assert len(pages) == 3
     assert screen.carousel.index == 2
+    for page in pages:
+        page.build()
     assert all(len(page.week_rows) == 4 for page in pages)
     assert pages[-1].title_label.text == "Oct 15 – Nov 14, 2026"
     assert pages[-1].total_label.text == "$30.00 of $600.00 · $150.00/week"
@@ -238,6 +240,59 @@ def test_refresh_builds_one_page_per_period_and_opens_on_current(kivy_window):
     assert pages[0].older_label.text == ""
     assert pages[0].newer_label.text == "Sep 15 – Oct 14 ›"
     assert pages[-1].older_label.text == "‹ Sep 15 – Oct 14"
+
+
+def test_each_page_breaks_down_its_own_periods_spending_by_category(kivy_window):
+    app = FakeApp(saved_amounts=[
+        make_entry(12.0, datetime(2026, 9, 20), FOOD),
+        make_entry(30.0, datetime(2026, 10, 16), FOOD),
+        make_entry(10.0, datetime(2026, 10, 17)),
+    ])
+    screen = _history_screen(app)
+    older, current = screen.carousel.slides
+
+    assert [(r.name_label.text, r.share_label.text) for r in current.category_chart.legend_rows] == [
+        ("Food", "75%"), ("Uncategorized", "25%")
+    ]
+    assert current.category_chart.ring.total_label.text == "$40.00"
+    assert [r.amount_label.text for r in older.category_chart.legend_rows] == ["$12.00"]
+
+
+def test_each_page_breaks_down_its_own_periods_spending_by_retailer_and_brand(kivy_window):
+    app = FakeApp(saved_amounts=[
+        {**make_entry(12.0, datetime(2026, 9, 20)), "retailer": "Costco", "brand": None},
+        {**make_entry(30.0, datetime(2026, 10, 16)), "retailer": "Walmart", "brand": "Lay's"},
+        {**make_entry(10.0, datetime(2026, 10, 17)), "retailer": "Target", "brand": None},
+    ])
+    screen = _history_screen(app)
+    older, current = screen.carousel.slides
+
+    assert [(r.name_label.text, r.share_label.text) for r in current.retailer_chart.legend_rows] == [
+        ("Walmart", "75%"), ("Target", "25%")
+    ]
+    assert current.retailer_chart.note_label is None
+    assert [r.name_label.text for r in current.brand_chart.legend_rows] == ["Lay's"]
+    assert current.brand_chart.note_label.text == "Not counting $10.00 with no brand"
+    assert [r.name_label.text for r in older.retailer_chart.legend_rows] == ["Costco"]
+    assert older.brand_chart.ring is None
+
+
+def test_charts_run_category_then_retailer_then_brand_under_the_weeks(kivy_window):
+    page = _history_screen(FakeApp()).carousel.current_slide
+    order = list(reversed(page.content.children))
+
+    charts = [page.category_chart, page.retailer_chart, page.brand_chart]
+    assert [order.index(chart) for chart in charts] == [len(order) - 3, len(order) - 2, len(order) - 1]
+    assert order.index(page.week_rows[-1]) < order.index(page.category_chart)
+
+
+def test_weeks_and_chart_scroll_while_neighbor_hints_stay_put(kivy_window):
+    page = _history_screen(FakeApp()).carousel.current_slide
+
+    assert page.content.parent is page.scroll
+    assert page.category_chart.parent is page.content
+    assert all(row.parent is page.content for row in page.week_rows)
+    assert page.older_label.parent.parent is page
 
 
 def test_weekly_mode_pages_are_months_of_four_or_five_weeks(kivy_window):
@@ -373,6 +428,114 @@ def test_weekly_mode_month_total_ignores_money_from_last_months_final_week(kivy_
     assert september.total_label.text == "$130.00 of $400.00 · $100.00/week"
 
 
+## BUILDING AND CACHING PAGES ##
+
+def _three_periods():
+    # Aug 15 – Sep 14, Sep 15 – Oct 14 and the current Oct 15 – Nov 14 #
+    return FakeApp(saved_amounts=[make_entry(12.0, datetime(2026, 8, 20)), make_entry(30.0, datetime(2026, 10, 16), FOOD)])
+
+
+def test_opening_builds_only_the_page_shown_and_its_neighbors(kivy_window):
+    pages = _history_screen(_three_periods()).carousel.slides
+
+    assert [page.built for page in pages] == [False, True, True]
+
+
+def test_opening_on_an_older_period_builds_around_it(kivy_window):
+    screen = HistoryScreen(_three_periods(), name="history")
+    screen.refresh(now=NOW, open_start=datetime(2026, 8, 15))
+
+    assert [page.built for page in screen.carousel.slides] == [True, True, False]
+
+
+def test_swiping_builds_the_next_page_over(kivy_window):
+    from kivy.clock import Clock
+
+    screen = _history_screen(_three_periods())
+    screen.carousel.index = 1
+    Clock.tick()
+
+    assert all(page.built for page in screen.carousel.slides)
+
+
+def test_building_twice_doesnt_add_a_second_copy(kivy_window):
+    page = _history_screen(_three_periods()).carousel.current_slide
+    rows = page.week_rows
+
+    page.build()
+
+    assert page.week_rows is rows
+    assert len(page.children) == 2      # The scrolling content and the neighbor hints #
+
+
+def test_reopening_with_nothing_changed_reuses_every_page(kivy_window):
+    screen = _history_screen(_three_periods())
+    pages = list(screen.carousel.slides)
+    rows = pages[-1].week_rows
+
+    screen.refresh(now=NOW)
+
+    assert all(new is old for new, old in zip(screen.carousel.slides, pages))
+    assert screen.carousel.current_slide.week_rows is rows
+
+
+def test_a_new_transaction_rebuilds_only_its_own_period(kivy_window):
+    app = _three_periods()
+    screen = _history_screen(app)
+    august, september, october = screen.carousel.slides
+
+    app.saved_amounts.append(make_entry(5.0, datetime(2026, 10, 20)))
+    screen.refresh(now=NOW)
+    pages = screen.carousel.slides
+
+    assert pages[0] is august and pages[1] is september
+    assert pages[2] is not october
+    assert pages[2].total_label.text == "$35.00 spent"
+
+
+def test_a_new_period_rebuilds_the_page_that_now_has_a_newer_neighbor(kivy_window):
+    app = _three_periods()
+    screen = _history_screen(app)
+    august, september, october = screen.carousel.slides
+
+    screen.refresh(now=datetime(2026, 11, 16))
+    pages = screen.carousel.slides
+
+    assert len(pages) == 4
+    assert pages[0] is august and pages[1] is september
+    assert pages[2] is not october
+    assert pages[2].newer_label.text == "Nov 15 – Dec 14 ›"
+
+
+def test_a_new_day_rebuilds_the_current_period(kivy_window):
+    app = _three_periods()
+    app.budget_settings["weekly_max_history"] = [{"from": datetime(2026, 1, 1), "amount": 150.0}]
+    screen = _history_screen(app)
+    october = screen.carousel.current_slide
+
+    screen.refresh(now=NOW.replace(day=23))
+
+    assert screen.carousel.current_slide is not october
+    assert screen.carousel.current_slide.summary_label.text.endswith("6 days left")
+
+
+@pytest.mark.parametrize("change", [
+    lambda app: app.budget_settings.update(weekly_max_history=[{"from": datetime(2026, 1, 1), "amount": 90.0}]),
+    lambda app: app.budget_settings.update(mode="weekly"),
+    lambda app: app.saved_amounts[1].update(category={"name": "Food", "color": [0.2, 0.2, 0.9, 1]}),
+    lambda app: app.saved_amounts[1].update(retailer="Walmart"),
+])
+def test_budget_category_and_retailer_changes_rebuild_the_pages_they_show_on(kivy_window, change):
+    app = _three_periods()
+    screen = _history_screen(app)
+    current = screen.carousel.current_slide
+
+    change(app)
+    screen.refresh(now=NOW)
+
+    assert screen.carousel.current_slide is not current
+
+
 def test_refresh_replaces_pages_instead_of_adding(kivy_window):
     app = FakeApp(saved_amounts=[make_entry(12.0, datetime(2026, 8, 20))])
     screen = _history_screen(app)
@@ -395,7 +558,7 @@ def test_period_without_weekly_max_prompts_to_set_one(kivy_window):
     page = _history_screen(FakeApp()).carousel.slides[-1]
 
     assert page.total_label.text == "$0.00 spent"
-    assert page.summary_label.text == "Set a weekly max with View Budget"
+    assert page.summary_label.text == "Tap Budget to set a weekly max"
 
 
 def test_current_week_over_budget_summary(kivy_window):

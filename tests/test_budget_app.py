@@ -72,6 +72,37 @@ def test_build_handles_missing_files(tmp_path, kivy_window):
 
     assert instance.saved_amounts == []
     assert instance.saved_categories == []
+    assert instance.saved_names == {"retailer": [], "brand": []}
+
+
+def test_build_loads_saved_retailers_and_brands(tmp_path, kivy_window):
+    from main import BudgetApp
+
+    (tmp_path / "retailers.json").write_text(json.dumps(["Target", "Walmart"]))
+    (tmp_path / "brands.json").write_text("{not valid json")
+
+    instance = BudgetApp()
+    instance._user_data_dir = str(tmp_path)
+    instance.build()
+
+    assert instance.saved_names == {"retailer": ["Target", "Walmart"], "brand": []}
+    assert instance.names_files == {"retailer": str(tmp_path / "retailers.json"), "brand": str(tmp_path / "brands.json")}
+
+
+def test_build_loads_older_transactions_without_retailer_or_brand(tmp_path, kivy_window):
+    from main import BudgetApp
+
+    (tmp_path / "transactions.json").write_text(json.dumps([
+        {"amount": 9.99, "timestamp": "2026-07-01T12:00:00", "category": None, "note": None},
+        {"amount": 4.29, "timestamp": "2026-07-02T12:00:00", "category": None, "note": None, "retailer": "Walmart", "brand": "Lay's"}
+    ]))
+
+    instance = BudgetApp()
+    instance._user_data_dir = str(tmp_path)
+    instance.build()
+
+    assert [entry.get("retailer") for entry in instance.saved_amounts] == [None, "Walmart"]
+    assert [entry.get("brand") for entry in instance.saved_amounts] == [None, "Lay's"]
 
 
 ## DELETE ENTRY ##
@@ -373,8 +404,15 @@ def test_budget_saved_before_weekly_mode_loads_as_monthly(tmp_path, kivy_window)
 
 ## SCREEN NAVIGATION ##
 
-def test_view_history_button_opens_history_screen(app):
-    btn_history = next(w for w in _root_widget(app).walk() if getattr(w, "text", None) == "View\nHistory")
+def test_main_page_buttons_read_spending_history_and_budget(app):
+    texts = [getattr(w, "text", None) for w in _root_widget(app).walk()]
+
+    assert "Spending\nHistory" in texts and "Budget" in texts
+    assert "View\nHistory" not in texts and "View\nBudget" not in texts
+
+
+def test_spending_history_button_opens_history_screen(app):
+    btn_history = next(w for w in _root_widget(app).walk() if getattr(w, "text", None) == "Spending\nHistory")
 
     btn_history.dispatch("on_release")
 
@@ -436,7 +474,7 @@ def test_every_swipeable_screen_shares_the_same_swipe_settings(app):
 
 
 def test_a_shorter_swipe_now_turns_the_week(app, monkeypatch):
-    import kivy.uix.carousel as carousel_module
+    import ui.page_carousel as carousel_module
 
     # Records where each swipe would settle instead of animating there #
     targets = []

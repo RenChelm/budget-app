@@ -10,6 +10,7 @@ from ui.color_utils import contrast_color
 
 BORDER_WIDTH = dp(1.1)
 BORDER_RADIUS = dp(10)
+ROW_HEIGHT = dp(70)
 
 ## TRANSACTION ROW (TAP TO EDIT; SIDEWAYS SWIPES BELONG TO THE WEEK CAROUSEL) ##
 
@@ -24,7 +25,7 @@ class EntryRow(ButtonBehavior, FloatLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.size_hint_y = None
-        self.height = dp(70)
+        self.height = ROW_HEIGHT
 
         with self.canvas.before:
             self.bg_color_instruction = Color(*self.category_color)

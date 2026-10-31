@@ -1,23 +1,51 @@
+import copy
 from datetime import datetime
 
+from kivy.clock import Clock
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
-from kivy.uix.widget import Widget
+from kivy.uix.scrollview import ScrollView
 from kivy.metrics import dp, sp
 
 from budget_periods import format_money, format_period, history_periods
 from ui.back_screen import BackScreen
 from ui.carry_over_button import CarryOverButton
 from ui.page_carousel import PageCarousel
+from ui.spending_chart import CategoryChart, NameChart
 from ui.week_row import WeekRow
 
-## ONE BUDGET PERIOD (HEADER + 4-5 WEEK ROWS + NEIGHBOR HINTS) ##
+## ONE BUDGET PERIOD (HEADER + 4-5 WEEK ROWS + CHARTS + NEIGHBOR HINTS) ##
 
 class PeriodPage(BoxLayout):
     def __init__(self, period, previous_period=None, next_period=None, on_week_tap=None, on_carry_over=None, mode="monthly", **kwargs):
-        super().__init__(orientation="vertical", padding=[dp(12), dp(14)], spacing=dp(10), **kwargs)
+        super().__init__(orientation="vertical", **kwargs)
         self.period = period
+        self.key = self.key_for(period, previous_period, next_period, mode)
+        self.built = False
+        self._build_args = (previous_period, next_period, on_week_tap, on_carry_over, mode)
+
+    @staticmethod
+    def key_for(period, previous_period, next_period, mode):
+        # Everything the page shows; an equal key means a cached page is still right #
+        # Copied, so later edits to the data can't quietly change a cached page's key #
+        bounds = lambda neighbor: (neighbor["start"], neighbor["end"]) if neighbor else None
+        return copy.deepcopy((mode, period, bounds(previous_period), bounds(next_period)))
+
+    def build(self):
+        # Pages are built when they're first about to be seen, since building every period's charts is slow #
+        if self.built:
+            return
+        self.built = True
+        period = self.period
+        previous_period, next_period, on_week_tap, on_carry_over, mode = self._build_args
+
+        # The weeks and category chart scroll when they don't all fit; the neighbor hints stay put below them #
+        self.content = BoxLayout(orientation="vertical", size_hint_y=None, padding=[dp(12), dp(14)], spacing=dp(10))
+        self.content.bind(minimum_height=self.content.setter("height"))
+        self.scroll = ScrollView(do_scroll_x=False, bar_width=dp(3))
+        self.scroll.add_widget(self.content)
+        self.add_widget(self.scroll)
 
         weeks = period["weeks"]
         weekly_max = period["weekly_max"]
@@ -62,7 +90,7 @@ class PeriodPage(BoxLayout):
             header.add_widget(carry_row)
             header.height += carry_row.height
 
-        self.add_widget(header)
+        self.content.add_widget(header)
 
         ## WEEK ROWS ##
 
@@ -73,11 +101,19 @@ class PeriodPage(BoxLayout):
             if on_week_tap is not None:
                 row.bind(on_release=lambda inst, i=number - 1: on_week_tap(period, i))
             self.week_rows.append(row)
-            self.add_widget(row)
+            self.content.add_widget(row)
+
+        ## SPENDING BY CATEGORY, RETAILER AND BRAND ##
+
+        self.category_chart = CategoryChart(period["categories"])
+        self.retailer_chart = NameChart("retailer", period["retailers"], period["spent"])
+        self.brand_chart = NameChart("brand", period["brands"], period["spent"])
+        for chart in (self.category_chart, self.retailer_chart, self.brand_chart):
+            self.content.add_widget(chart)
 
         ## NEIGHBOR HINTS ##
 
-        hints = BoxLayout(size_hint_y=None, height=dp(24))
+        hints = BoxLayout(size_hint_y=None, height=dp(36), padding=[dp(12), dp(4), dp(12), dp(8)])
         self.older_label = self._make_hint_label(
             f"‹ {format_period(previous_period['start'], previous_period['end'], mode)}" if previous_period else "", "left"
         )
@@ -88,11 +124,9 @@ class PeriodPage(BoxLayout):
         hints.add_widget(self.newer_label)
         self.add_widget(hints)
 
-        self.add_widget(Widget())  # Spacer #
-
     def _summary_text(self, weeks, weekly_max):
         if weekly_max is None:
-            return "Set a weekly max with View Budget"
+            return "Tap Budget to set a weekly max"
 
         current = next((week for week in weeks if week["status"] == "current"), None)
         if current is not None:
@@ -128,24 +162,49 @@ class HistoryScreen(BackScreen):
         self.carousel = PageCarousel()
         self.layout.add_widget(self.carousel)
 
+        # A swipe builds the page past the one it landed on, a frame later so the landing isn't held up #
+        self._trigger_build_near = Clock.create_trigger(lambda dt: self.build_near(self.carousel.index))
+        self.carousel.bind(index=lambda inst, index: self._trigger_build_near())
+
     def refresh(self, now=None, open_start=None):
         settings = self.app.budget_settings
+        mode = settings["mode"]
         periods = history_periods(self.app.saved_amounts, settings, now or datetime.now())
 
-        self.carousel.clear_widgets()
+        # Pages are kept between visits; only a period whose numbers changed (or whose neighbors did) gets a new page #
+        cached = {page.period["start"]: page for page in self.carousel.slides}
+        pages = []
         for i, period in enumerate(periods):
-            self.carousel.add_widget(PeriodPage(
-                period,
-                previous_period=periods[i - 1] if i > 0 else None,
-                next_period=periods[i + 1] if i + 1 < len(periods) else None,
-                on_week_tap=lambda tapped, week_index: self.app.open_week(tapped["start"], tapped["end"], week_index),
-                on_carry_over=self.app.set_carry_over,
-                mode=settings["mode"]
-            ))
+            previous_period = periods[i - 1] if i > 0 else None
+            next_period = periods[i + 1] if i + 1 < len(periods) else None
+
+            page = cached.get(period["start"])
+            if page is None or page.key != PeriodPage.key_for(period, previous_period, next_period, mode):
+                page = PeriodPage(
+                    period,
+                    previous_period=previous_period,
+                    next_period=next_period,
+                    on_week_tap=lambda tapped, week_index: self.app.open_week(tapped["start"], tapped["end"], week_index),
+                    on_carry_over=self.app.set_carry_over,
+                    mode=mode
+                )
+            pages.append(page)
+
+        if len(pages) != len(self.carousel.slides) or any(new is not old for new, old in zip(pages, self.carousel.slides)):
+            self.carousel.clear_widgets()
+            for page in pages:
+                self.carousel.add_widget(page)
 
         # Opens on the current period unless asked for another (e.g. coming back from one of its weeks) #
         starts = [period["start"] for period in periods]
         self.carousel.index = starts.index(open_start) if open_start in starts else len(periods) - 1
+        self.build_near(self.carousel.index)
+
+    def build_near(self, index):
+        # The page showing and the ones either side, which slide into view during a swipe #
+        slides = self.carousel.slides
+        for page in slides[max(index - 1, 0):index + 2]:
+            page.build()
 
     def go_back(self):
         self.app.show_main()

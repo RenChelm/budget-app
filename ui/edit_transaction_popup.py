@@ -2,18 +2,19 @@ import json
 
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
-from kivy.uix.popup import Popup
 from kivy.metrics import dp
 
 from datetime import datetime
 
+from ui.advanced_section import AdvancedSection
 from ui.category_select_popup import CategorySelectPopup
 from ui.date_input import DateInput
+from ui.expanding_popup import ExpandingPopup
 from ui.number_input import NumberInput
 from ui.text_box import TextBox
 from ui.color_utils import CONFIRM_COLOR, contrast_color
 
-class EditTransactionPopup(Popup):
+class EditTransactionPopup(ExpandingPopup):
     def __init__(self, app, index, **kwargs):
         super().__init__(**kwargs)
         self.app = app
@@ -58,6 +59,9 @@ class EditTransactionPopup(Popup):
 
         category_btn.bind(on_release=lambda inst: self.open_category_window_for_edit(index, category_btn))
 
+        # Opens already showing if the transaction has a retailer or brand #
+        self.advanced = AdvancedSection(app, retailer=entry.get("retailer"), brand=entry.get("brand"))
+
         save_btn = Button(
             text="Save",
             background_normal="",
@@ -84,13 +88,14 @@ class EditTransactionPopup(Popup):
         layout.add_widget(self.date_input_box)
         layout.add_widget(category_btn)
         layout.add_widget(note_input_box)
+        layout.add_widget(self.advanced)
         layout.add_widget(btn_row)
 
         self.title = "Edit Transaction"
         self.title_color = (1, 1, 1, 1)
         self.content = layout
-        self.size_hint = (0.8, None)
-        self.height = dp(330)
+        self.size_hint_x = 0.8
+        self.fit_to(layout, growing=self.advanced.reveal)
 
     def save_edit(self, index, new_amount, new_note):
         try:
@@ -112,6 +117,8 @@ class EditTransactionPopup(Popup):
         self.app.saved_amounts[index]["amount"] = new_amount
         self.app.saved_amounts[index]["category"] = getattr(self.app, "selected_category", self.app.saved_amounts[index]["category"])
         self.app.saved_amounts[index]["note"] = new_note if new_note else None
+        self.app.saved_amounts[index]["retailer"] = self.advanced.choices["retailer"]
+        self.app.saved_amounts[index]["brand"] = self.advanced.choices["brand"]
 
         with open(self.app.transactions_file, "w") as f:
             json.dump(self.app.saved_amounts, f, default=str)

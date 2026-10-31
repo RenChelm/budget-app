@@ -111,10 +111,8 @@ def _status(start, end, now):
         return "past"
     return "current"
 
-def summarize_week(transactions, start, end, weekly_max, now, carried_in=0):
-    entries = [entry for entry in transactions if start <= entry["timestamp"] < end]
-    spent = sum(entry["amount"] for entry in entries)
-
+def category_totals(entries):
+    # Spent per category, biggest first (ties keep the order they were first spent in) #
     # Uncategorized entries group under None #
     totals = {}
     for entry in entries:
@@ -124,7 +122,24 @@ def summarize_week(transactions, start, end, weekly_max, now, carried_in=0):
             totals[name] = {"name": name, "color": category["color"] if category else None, "amount": 0}
         totals[name]["amount"] += entry["amount"]
 
-    top = max(totals.values(), key=lambda total: total["amount"], default=None)
+    return sorted(totals.values(), key=lambda total: total["amount"], reverse=True)
+
+def name_totals(entries, key):
+    # Spent per retailer or brand (`key`), biggest first; entries without one are left out #
+    totals = {}
+    for entry in entries:
+        name = entry.get(key)
+        if name:
+            totals[name] = totals.get(name, 0) + entry["amount"]
+
+    return [{"name": name, "amount": amount} for name, amount in sorted(totals.items(), key=lambda item: item[1], reverse=True)]
+
+def summarize_week(transactions, start, end, weekly_max, now, carried_in=0):
+    entries = [entry for entry in transactions if start <= entry["timestamp"] < end]
+    spent = sum(entry["amount"] for entry in entries)
+
+    totals = category_totals(entries)
+    top = totals[0] if totals else None
     if top is None or top["amount"] <= 0 or spent <= 0:
         top = None
 
@@ -186,6 +201,7 @@ def history_periods(transactions, settings, now, since=None):
         spent = sum(week["spent"] for week in weeks)
         incoming = 0 if weekly else sum(week["carried_in"] for week in weeks)
         budget = sum(week["weekly_max"] for week in weeks) + incoming if weekly_max is not None else None
+        entries = [entry for entry in transactions if start <= entry["timestamp"] < end]
         period = {
             "start": start,
             "end": end,
@@ -196,6 +212,9 @@ def history_periods(transactions, settings, now, since=None):
             "carried_in": incoming,
             "left": budget - spent if budget is not None else None,
             "weeks": weeks,
+            "categories": category_totals(entries),
+            "retailers": name_totals(entries, "retailer"),
+            "brands": name_totals(entries, "brand"),
         }
         period["carry_over"] = None if weekly else _carry_over(period, oldest, settings)
         if not weekly:

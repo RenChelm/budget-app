@@ -24,6 +24,7 @@ from datetime import datetime
 from ui.add_transaction_popup import AddTransactionPopup
 from ui.edit_transaction_popup import EditTransactionPopup
 from ui.category_select_popup import CategorySelectPopup
+from ui.name_select_popup import NAME_KINDS
 from ui.sort_controls import SortControls
 from ui.menu_button import MenuButton
 from ui.history_screen import HistoryScreen
@@ -31,6 +32,7 @@ from ui.week_carousel import WeekCarousel
 from ui.week_screen import WeekScreen
 from ui.budget_popup import BudgetPopup
 from ui.carry_over_popup import CarryOverPopup
+from ui.back_swipe import filter_back_swipes
 from ui.color_utils import contrast_color
 
 from budget_periods import pending_carry_over, period_bounds, set_carry_over, set_weekly_max, week_summary
@@ -76,6 +78,17 @@ class BudgetApp(App):
                     self.saved_categories = []
         except (FileNotFoundError, json.JSONDecodeError):
             self.saved_categories = []
+
+        # Retailers and brands the user has added for the Advanced section (retailers.json, brands.json) #
+        self.saved_names = {}
+        self.names_files = {kind: os.path.join(self.user_data_dir, f"{kind}s.json") for kind in NAME_KINDS}
+        for kind, path in self.names_files.items():
+            try:
+                with open(path, "r") as f:
+                    content = f.read().strip()
+                    self.saved_names[kind] = json.loads(content) if content else []
+            except (FileNotFoundError, json.JSONDecodeError):
+                self.saved_names[kind] = []
 
         # Defaults to calendar months with no weekly max until the user sets one #
         # Weekly mode instead keeps every week 7 days, starting on `start_weekday` (0 = Monday) #
@@ -216,10 +229,10 @@ class BudgetApp(App):
             spacing=dp(3)
         )
 
-        ## VIEW HISTORY BUTTON ##
+        ## SPENDING HISTORY BUTTON ##
 
         btn_history = Button(
-            text="View\nHistory",
+            text="Spending\nHistory",
             halign="center",
             valign="middle",
             background_normal="",
@@ -230,10 +243,10 @@ class BudgetApp(App):
             on_release=self.open_history
         )
 
-        ## VIEW BUDGET BUTTON ##
+        ## BUDGET BUTTON ##
 
         btn_budget = Button(
-            text="View\nBudget",
+            text="Budget",
             halign="center",
             valign="middle",
             background_normal="",
@@ -340,6 +353,7 @@ class BudgetApp(App):
 
     def on_start(self):
         Window.bind(on_keyboard=self.on_back_key)
+        filter_back_swipes()
         self.check_carry_over()
 
     def on_resume(self):

@@ -67,3 +67,40 @@ def test_tap_opens_edit_window_for_its_entry(entry_row):
 
     assert stub.edited == [7]
 
+
+
+## A LONG LIST ##
+
+def test_long_list_keeps_one_height_while_scrolling(kivy_window):
+    # Unmeasured rows used to count as Kivy's default 100px, so the list shrank (and re-laid out every row) #
+    # each time a new row scrolled into view #
+    from datetime import datetime
+    from kivy.clock import Clock
+    from ui.entry_row import ROW_HEIGHT
+    from ui.week_carousel import WeekTransactionsPage
+
+    class StubCarousel:
+        def load_previous(self):
+            pass
+
+        def load_next(self):
+            pass
+
+    page = WeekTransactionsPage(StubCarousel(), 1, 4, datetime(2026, 10, 1), datetime(2026, 10, 8), size=(360, 600))
+    kivy_window.add_widget(page)
+    try:
+        page.rv.data = [
+            {"timestamp_text": "Oct 01", "category_text": "Food", "amount_text": "$1.00", "note_text": "", "index": i,
+             "category_color": [0.3, 0.45, 0.32, 1]}
+            for i in range(150)
+        ]
+        heights = set()
+        for step in range(20):
+            page.rv.scroll_y = 1 - step / 19
+            for _ in range(3):
+                Clock.tick()
+            heights.add(page.rv.layout_manager.height)
+
+        assert heights == {150 * ROW_HEIGHT}
+    finally:
+        kivy_window.remove_widget(page)

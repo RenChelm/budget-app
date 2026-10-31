@@ -8,6 +8,7 @@ from budget_periods import (
     format_period,
     format_range,
     history_periods,
+    name_totals,
     next_period_start,
     next_weekly_period_start,
     pending_carry_over,
@@ -279,6 +280,55 @@ def test_history_periods_runs_from_oldest_transaction_to_current_period():
     assert all(p["weekly_max"] == 150.0 for p in periods)
     assert periods[0]["weeks"][0]["spent"] == 12.0
     assert [w["status"] for w in periods[-1]["weeks"]] == ["past", "current", "upcoming", "upcoming"]
+
+
+def test_history_periods_break_each_periods_spending_down_by_category():
+    transactions = [
+        make_entry(5.0, datetime(2026, 9, 20), GAS),                # Last period, so not counted #
+        make_entry(8.0, datetime(2026, 10, 16), FOOD),
+        make_entry(4.0, datetime(2026, 10, 18)),
+        make_entry(20.0, datetime(2026, 10, 21), GAS),
+        make_entry(6.0, datetime(2026, 11, 2), FOOD),               # Later week of the same period #
+    ]
+
+    periods = history_periods(transactions, make_settings(start_day=15), datetime(2026, 11, 3))
+
+    assert [(c["name"], c["amount"]) for c in periods[-1]["categories"]] == [("Gas", 20.0), ("Food", 14.0), (None, 4.0)]
+    assert periods[-1]["categories"][0]["color"] == GAS["color"]
+    assert [(c["name"], c["amount"]) for c in periods[0]["categories"]] == [("Gas", 5.0)]
+
+
+def test_name_totals_add_up_each_name_biggest_first_leaving_out_entries_without_one():
+    entries = [
+        {"amount": 4.0, "retailer": "Target"},
+        {"amount": 9.0, "retailer": "Walmart"},
+        {"amount": 3.0, "retailer": None},
+        {"amount": 2.0},                                    # From before retailers existed #
+        {"amount": 4.0, "retailer": "Target"},
+        {"amount": 8.0, "retailer": "Aldi"},
+    ]
+
+    assert name_totals(entries, "retailer") == [
+        {"name": "Walmart", "amount": 9.0}, {"name": "Target", "amount": 8.0}, {"name": "Aldi", "amount": 8.0}
+    ]
+    assert name_totals(entries, "brand") == []
+
+
+def test_history_periods_break_each_periods_spending_down_by_retailer_and_brand():
+    transactions = [
+        {**make_entry(5.0, datetime(2026, 9, 20)), "retailer": "Costco", "brand": "Kirkland"},     # Last period #
+        {**make_entry(8.0, datetime(2026, 10, 16)), "retailer": "Walmart", "brand": "Lay's"},
+        {**make_entry(3.0, datetime(2026, 10, 18)), "retailer": None, "brand": "Lay's"},
+        make_entry(20.0, datetime(2026, 10, 21)),
+        {**make_entry(6.0, datetime(2026, 11, 2)), "retailer": "Walmart", "brand": None},
+    ]
+
+    periods = history_periods(transactions, make_settings(start_day=15), datetime(2026, 11, 3))
+
+    assert periods[-1]["retailers"] == [{"name": "Walmart", "amount": 14.0}]
+    assert periods[-1]["brands"] == [{"name": "Lay's", "amount": 11.0}]
+    assert periods[0]["retailers"] == [{"name": "Costco", "amount": 5.0}]
+    assert periods[0]["brands"] == [{"name": "Kirkland", "amount": 5.0}]
 
 
 def test_history_periods_without_transactions_is_just_the_current_period():

@@ -9,7 +9,7 @@ from kivy.metrics import dp, sp
 
 from budget_periods import format_range, period_weeks
 from ui.chevron_button import ChevronButton
-from ui.entry_row import EntryRow
+from ui.entry_row import ROW_HEIGHT, EntryRow
 from ui.page_carousel import PageCarousel
 
 ## ONE WEEK OF TRANSACTIONS (HEADER STRIP + LIST) ##
@@ -39,8 +39,10 @@ class WeekTransactionsPage(BoxLayout):
         body = FloatLayout()
         self.rv = RecycleView(do_scroll_x=False, pos_hint={"x": 0, "y": 0})
 
+        # Every row is the same height; telling the list up front keeps it from measuring rows as they scroll #
+        # into view, which changed its total height (and re-laid out every row) on almost every frame #
         layout = RecycleBoxLayout(
-            default_size=(None, None),
+            default_size=(None, ROW_HEIGHT),
             default_size_hint=(1, None),
             size_hint=(1, None),
             orientation='vertical'
