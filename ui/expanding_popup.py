@@ -1,6 +1,8 @@
 from kivy.metrics import dp
 from kivy.uix.popup import Popup
 
+from ui.edge_to_edge import safe_area
+
 POPUP_CHROME = dp(28)       # Popup's own 12dp padding above and below its content, plus the 4dp title separator
 SCREEN_MARGIN = dp(8)
 
@@ -35,6 +37,6 @@ class ExpandingPopup(Popup):
             closed_height = self.height - (self.growing.height if self.growing is not None else 0)
             top = window.center[1] + closed_height / 2
 
-        # Shifts up rather than run off the bottom of the screen #
+        # Shifts up rather than run off the bottom of the screen, and stays clear of the status bar and gesture bar #
         self.center_x = window.center[0]
-        self.top = min(max(top, self.height + SCREEN_MARGIN), window.height)
+        self.top = min(max(top, self.height + SCREEN_MARGIN + safe_area.bottom), window.height - safe_area.top)

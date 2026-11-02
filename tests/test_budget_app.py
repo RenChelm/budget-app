@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from kivy.app import App
+from kivy.clock import Clock
 from kivy.uix.button import Button
 
 
@@ -409,6 +410,23 @@ def test_main_page_buttons_read_spending_history_and_budget(app):
 
     assert "Spending\nHistory" in texts and "Budget" in texts
     assert "View\nHistory" not in texts and "View\nBudget" not in texts
+
+
+def test_main_page_buttons_stay_clear_of_the_screens_rounded_corners(app):
+    from kivy.metrics import dp
+
+    labels = {"Spending\nHistory", "Budget", "Add", "Custom"}
+    buttons = [w for w in _root_widget(app).walk() if getattr(w, "text", None) in labels]
+    assert len(buttons) == 4
+
+    page = buttons[0].parent.parent
+    page.size = (dp(411), dp(700))   # As wide as a Pixel 9's screen #
+    page.do_layout()
+    for cluster in {button.parent for button in buttons}:
+        cluster.do_layout()
+
+    for button in buttons:
+        assert page.x + dp(10) <= button.x and button.right <= page.right - dp(10)
 
 
 def test_spending_history_button_opens_history_screen(app):

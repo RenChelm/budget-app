@@ -10,7 +10,6 @@ from kivy.core.window import Window
 
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.widget import Widget
@@ -23,7 +22,7 @@ from datetime import datetime
 
 from ui.add_transaction_popup import AddTransactionPopup
 from ui.edit_transaction_popup import EditTransactionPopup
-from ui.category_select_popup import CategorySelectPopup
+from ui.custom_popup import CustomPopup
 from ui.name_select_popup import NAME_KINDS
 from ui.sort_controls import SortControls
 from ui.menu_button import MenuButton
@@ -33,6 +32,8 @@ from ui.week_screen import WeekScreen
 from ui.budget_popup import BudgetPopup
 from ui.carry_over_popup import CarryOverPopup
 from ui.back_swipe import filter_back_swipes
+from ui.edge_to_edge import SafeAreaStrip, draw_edge_to_edge
+from ui.rounded_button import RoundedButton
 from ui.color_utils import contrast_color
 
 from budget_periods import pending_carry_over, period_bounds, set_carry_over, set_weekly_max, week_summary
@@ -225,18 +226,17 @@ class BudgetApp(App):
             orientation="vertical",
             size_hint=(None, None),
             width=dp(90),
-            pos_hint={"x": 0.01, "y": 0.005},
+            pos_hint={"x": 0.03, "y": 0.005},     # Far enough in that the screen's rounded corners don't cut it off #
             spacing=dp(3)
         )
 
         ## SPENDING HISTORY BUTTON ##
 
-        btn_history = Button(
+        btn_history = RoundedButton(
             text="Spending\nHistory",
             halign="center",
             valign="middle",
-            background_normal="",
-            background_color=(0.51765, 0.878, 0.737, 1),
+            fill_color=(0.51765, 0.878, 0.737, 1),
             color=(0, 0, 0, 1),
             size_hint=(1, None),
             height=dp(91),
@@ -245,12 +245,11 @@ class BudgetApp(App):
 
         ## BUDGET BUTTON ##
 
-        btn_budget = Button(
+        btn_budget = RoundedButton(
             text="Budget",
             halign="center",
             valign="middle",
-            background_normal="",
-            background_color=(0.51765, 0.878, 0.737, 1),
+            fill_color=(0.51765, 0.878, 0.737, 1),
             color=(0, 0, 0, 1),
             size_hint=(1, None),
             height=dp(91),
@@ -289,46 +288,44 @@ class BudgetApp(App):
             orientation="vertical",
             size_hint=(None, None),
             width=dp(90),
-            pos_hint={"right": 0.99, "y": 0.005},
+            pos_hint={"right": 0.97, "y": 0.005}, # Far enough in that the screen's rounded corners don't cut it off #
             spacing=dp(3)
         )
 
         ## ADD BUTTON ##
 
-        btn_add = Button(
+        btn_add = RoundedButton(
             text="Add",
             halign="center",
             valign="middle",
-            background_normal="",
-            background_color=(0.51765, 0.878, 0.737, 1),
+            fill_color=(0.51765, 0.878, 0.737, 1),
             color=(0, 0, 0, 1),
             size_hint=(1, None),
             height=dp(91),
             on_release=self.open_transaction_window
         )
 
-        ## CATEGORIES BUTTON ##
+        ## CUSTOM BUTTON (CATEGORIES, RETAILERS AND BRANDS) ##
 
-        btn_categories = Button(
-            text="Categories",
+        btn_custom = RoundedButton(
+            text="Custom",
             halign="center",
             valign="middle",
-            background_normal="",
-            background_color=(0.51765, 0.878, 0.737, 1),
+            fill_color=(0.51765, 0.878, 0.737, 1),
             color=(0, 0, 0, 1),
             size_hint=(1, None),
             height=dp(91),
-            on_release=lambda x: CategorySelectPopup(self).open()
+            on_release=lambda x: CustomPopup(self).open()
         )
 
         # Center text #
         btn_add.text_size = btn_add.size
         btn_add.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
-        btn_categories.text_size = btn_categories.size
-        btn_categories.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
+        btn_custom.text_size = btn_custom.size
+        btn_custom.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
 
         btn_cluster.add_widget(btn_add)
-        btn_cluster.add_widget(btn_categories)
+        btn_cluster.add_widget(btn_custom)
         main.add_widget(btn_cluster)
 
         root.add_widget(main)
@@ -349,11 +346,23 @@ class BudgetApp(App):
 
         self.update_display()
 
-        return self.screen_manager
+        # On Android the app draws behind the status bar, camera and gesture bar; these strips keep the screens clear of them #
+        app_root = BoxLayout(orientation="vertical")
+        app_root.add_widget(SafeAreaStrip("top", (0.192, 0.4, 0.29, 1)))     # Seafoam Green, like the top bars #
+        app_root.add_widget(self.screen_manager)
+        app_root.add_widget(SafeAreaStrip(
+            "bottom", (0.125, 0.259, 0.188, 1),     # Forest Green, like the background #
+            # Temporarily off: thin Light Gray bar for the gesture handle to sit on #
+            # bar_color=(0.8, 0.8, 0.8, 1),         # Light Gray, as thin as the dividers #
+            # bar_height=dp(9)
+        ))
+
+        return app_root
 
     def on_start(self):
         Window.bind(on_keyboard=self.on_back_key)
         filter_back_swipes()
+        draw_edge_to_edge()
         self.check_carry_over()
 
     def on_resume(self):

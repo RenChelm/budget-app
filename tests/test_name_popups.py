@@ -304,3 +304,94 @@ def test_rename_sits_high_so_the_keyboard_never_covers_the_name(kivy_window):
     assert isinstance(popup.name_input, TextBox)
     assert popup.top <= kivy_window.height
     assert popup.y > kivy_window.height / 2
+
+
+## MANAGING A LIST (OPENED FROM CUSTOM ON THE MAIN PAGE) ##
+
+def make_manager(app, kind="retailer"):
+    return NameSelectPopup(app, kind)
+
+
+@pytest.mark.parametrize("kind, title, hint", [
+    ("retailer", "Manage Retailers", "Search or add retailer"),
+    ("brand", "Manage Brands", "Search or add brand"),
+])
+def test_managing_has_its_own_title_and_no_clear_button(tmp_path, kivy_window, kind, title, hint):
+    popup = make_manager(FakeApp(tmp_path), kind)
+
+    assert popup.title == title
+    assert popup.search_input.hint_text == hint
+    assert popup.clear_btn is None
+    assert not any(getattr(w, "text", "").startswith("No ") for w in popup.content.walk() if isinstance(w, Button))
+
+
+def test_managing_lists_saved_names_with_x_and_edit(tmp_path, kivy_window):
+    popup = make_manager(FakeApp(tmp_path, retailers=["Walmart", "Aldi"]))
+
+    assert listed_names(popup) == ["Aldi", "Walmart"]
+    assert row_button(popup, "Walmart", "X") and row_button(popup, "Walmart", "Edit")
+
+
+def test_managing_adds_a_name_and_stays_open_for_more(tmp_path, kivy_window):
+    app = FakeApp(tmp_path, retailers=["Walmart"])
+    popup = make_manager(app)
+    popup.open(animation=False)
+    popup.search_input.text = "  Aldi "
+
+    popup.add_btn.dispatch("on_release")
+
+    assert saved_file(app.names_files["retailer"]) == ["Aldi", "Walmart"]
+    assert popup.search_input.text == ""
+    assert listed_names(popup) == ["Aldi", "Walmart"]
+    assert popup._is_open
+
+
+def test_managing_enter_adds_a_new_name(tmp_path, kivy_window):
+    app = FakeApp(tmp_path)
+    popup = make_manager(app, "brand")
+    popup.open(animation=False)
+    popup.search_input.text = "Lay's"
+
+    popup.search_input.dispatch("on_text_validate")
+
+    assert app.saved_names["brand"] == ["Lay's"]
+    assert popup._is_open
+
+
+def test_managing_enter_on_a_saved_name_does_nothing(tmp_path, kivy_window):
+    app = FakeApp(tmp_path, retailers=["Walmart"])
+    popup = make_manager(app)
+    popup.open(animation=False)
+    popup.search_input.text = "walmart"
+
+    popup.search_input.dispatch("on_text_validate")
+
+    assert app.saved_names["retailer"] == ["Walmart"]
+    assert popup.search_input.text == "walmart"
+    assert popup._is_open
+
+
+def test_managing_tapping_a_name_renames_it(tmp_path, kivy_window, monkeypatch):
+    opened = []
+    monkeypatch.setattr(NameEditPopup, "open", lambda self, *args, **kwargs: opened.append(self))
+    app = FakeApp(tmp_path, retailers=["Walmrat"])
+    app.saved_amounts = [{"amount": 5.0, "timestamp": datetime(2026, 10, 1), "retailer": "Walmrat"}]
+    popup = make_manager(app)
+
+    row_button(popup, "Walmrat", "Walmrat").dispatch("on_release")
+    opened[0].name_input.text = "Walmart"
+    opened[0]._save()
+
+    assert opened[0].title == "Edit Retailer"
+    assert listed_names(popup) == ["Walmart"]
+    assert app.saved_amounts[0]["retailer"] == "Walmart"
+
+
+def test_managing_x_removes_the_name(tmp_path, kivy_window):
+    app = FakeApp(tmp_path, retailers=["Target", "Walmart"])
+    popup = make_manager(app)
+
+    row_button(popup, "Walmart", "X").dispatch("on_release")
+
+    assert listed_names(popup) == ["Target"]
+    assert saved_file(app.names_files["retailer"]) == ["Target"]

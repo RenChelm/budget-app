@@ -45,13 +45,16 @@ def rename_name(names, old, new):
 ## PICK, ADD, RENAME OR REMOVE A RETAILER OR BRAND ##
 
 class NameSelectPopup(Popup):
-    def __init__(self, app, kind, on_select, on_rename=None, **kwargs):
+    def __init__(self, app, kind, on_select=None, on_rename=None, **kwargs):
         super().__init__(**kwargs)
         self.app = app
         self.kind = kind
         self.label = NAME_KINDS[kind]
         self.on_select = on_select
         self.on_rename = on_rename
+
+        # Without `on_select` it only manages the list (opened from Custom on the main page) instead of picking from it #
+        self.picking = on_select is not None
 
         outer_layout = BoxLayout(orientation="vertical", padding=dp(10), spacing=dp(10))
 
@@ -68,13 +71,15 @@ class NameSelectPopup(Popup):
         self.list_layout = BoxLayout(orientation="vertical", padding=dp(10), spacing=dp(10), size_hint_y=None)
         self.list_layout.bind(minimum_height=self.list_layout.setter("height"))
 
-        self.clear_btn = Button(
-            text=f"No {self.label}",
-            size_hint_y=None,
-            height=dp(40),
-            color=(1, 1, 1, 1)
-        )
-        self.clear_btn.bind(on_release=lambda x: self._select(None))
+        self.clear_btn = None
+        if self.picking:
+            self.clear_btn = Button(
+                text=f"No {self.label}",
+                size_hint_y=None,
+                height=dp(40),
+                color=(1, 1, 1, 1)
+            )
+            self.clear_btn.bind(on_release=lambda x: self._select(None))
 
         self._populate_list()
 
@@ -82,9 +87,10 @@ class NameSelectPopup(Popup):
         scroll.add_widget(self.list_layout)
         outer_layout.add_widget(self.search_input)
         outer_layout.add_widget(scroll)
-        outer_layout.add_widget(self.clear_btn)
+        if self.clear_btn is not None:
+            outer_layout.add_widget(self.clear_btn)
 
-        self.title = f"Select {self.label}"
+        self.title = f"Select {self.label}" if self.picking else f"Manage {self.label}s"
         self.title_color = (1, 1, 1, 1)
         self.content = outer_layout
         self.size_hint = (0.8, 0.84)
@@ -115,7 +121,7 @@ class NameSelectPopup(Popup):
             row = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(4))
 
             name_btn = fit_text(Button(text=name, color=(1, 1, 1, 1)))
-            name_btn.bind(on_release=lambda inst, n=name: self._select(n))
+            name_btn.bind(on_release=lambda inst, n=name: self._tap_name(n))
 
             delete_btn = Button(
                 text="X",
@@ -160,10 +166,17 @@ class NameSelectPopup(Popup):
         if not query:
             return
         existing = find_name(self.names, query)
-        if existing is not None:
-            self._select(existing)
-        else:
+        if existing is None:
             self._add(query)
+        elif self.picking:
+            self._select(existing)
+
+    def _tap_name(self, name):
+        # There's nothing to pick a name for when managing the list, so tapping it renames it like Edit does #
+        if self.picking:
+            self._select(name)
+        else:
+            self._open_edit_popup(name)
 
     def _select(self, name):
         self.on_select(name)
@@ -173,7 +186,11 @@ class NameSelectPopup(Popup):
         names, name = add_name(self.names, name)
         self.app.saved_names[self.kind] = names
         self._save_names()
-        self._select(name)
+        if self.picking:
+            self._select(name)
+        else:
+            # Stays open for adding more; clearing the search shows the whole list, the new name included #
+            self.search_input.text = ""
 
     def _delete(self, name):
         # Only removes it from the list; transactions that used it keep it #

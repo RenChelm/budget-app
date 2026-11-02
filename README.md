@@ -8,8 +8,9 @@ A mobile-friendly personal finance tracker built with **Python** and the **Kivy 
 - **Transaction Dates**: Pick the date a transaction happened with Android's date picker, or leave it blank to use the current time. Dates can be changed when editing.
 - **Weekly Transactions View**: The main page shows the current week's transactions. Swipe sideways (or tap the arrows) to move between the weeks of the current budget period.
 - **Custom Categories**: Group expenses by creating custom persistent categories with several color options.
+- **Custom Menu**: The Custom button on the main page opens a menu of Categories, Retailers and Brands, each opening its list to add to, rename or remove from.
 - **Custom Notes**: Further specify transactions by adding transaction specific notes.
-- **Retailers and Brands**: Tap Advanced at the bottom of the add or edit popup to optionally pick where a purchase was made (e.g. Walmart) and its brand (e.g. Lay's). Each has its own list with a search bar: type to find a saved name, or add a new one straight from the search. There are no built-in names. Names can be renamed (which updates past transactions) or removed from the list (past transactions keep them). Editing a transaction that has a retailer or brand opens with Advanced already showing.
+- **Retailers and Brands**: Tap Advanced at the bottom of the add or edit popup to optionally pick where a purchase was made (e.g. Walmart) and its brand (e.g. Lay's). Each has its own list with a search bar: type to find a saved name, or add a new one straight from the search. There are no built-in names. Names can be renamed (which updates past transactions) or removed from the list (past transactions keep them). The lists can also be managed from Custom on the main page, where adding a name keeps the list open for more and tapping a name renames it. Editing a transaction that has a retailer or brand opens with Advanced already showing.
 - **Sorting**: Sort transactions by date or amount, in ascending or descending order.
 - **Weekly Budgeting**: Set a weekly spending max and pick a budget period:
   - **Monthly**: Your budget starts on a day of the month (e.g. the 15th to line up with a bill). Each period is split into 4 weeks, with the last week absorbing the leftover days. That longer last week can have its own, bigger max.
@@ -20,6 +21,7 @@ A mobile-friendly personal finance tracker built with **Python** and the **Kivy 
 - **Real-time Statistics**: See how much you've spent, how much is left under your weekly max (including anything added or subtracted from the week before), and how many transactions you've made in the week being viewed.
 - **Persistent Storage**: Data is saved locally to the device using Kivy's `user_data_dir`, ensuring records persist between sessions.
 - **Density-Independent Layout**: UI scales correctly across screen sizes and densities using Kivy's `dp()`/`sp()` units.
+- **Edge-to-Edge Display**: On Android 11 and newer, the app's colors run behind the status bar, camera and gesture bar, while its buttons and text stay clear of them. The gesture handle sits on a thin light gray bar, like the dividers, across the bottom.
 - **Smooth Navigation**: Uses Kivy's `RecycleView` for efficient handling of long transaction histories.
 - **Dynamic Font Coloring**: Automatically applies contrasting font colors to categories depending on background luminance, improving text visibility.
 
@@ -114,15 +116,18 @@ Key build configuration:
 - `ui/category_edit_popup.py`: Self contained class that handles category edits.
 - `ui/category_select_popup.py`: Self contained class that handles category selection.
 - `ui/color_utils.py`: Self contained function that handles luminance-based font color for categories to improve text visibility, plus the shared green Save/Add button color.
+- `ui/custom_popup.py`: Self contained class for the Custom menu on the main page, which opens the category, retailer or brand list.
+- `ui/edge_to_edge.py`: Self contained function that lets the app draw behind Android's status bar, camera and gesture bar (Android 11+), plus the strips that keep the screens clear of them and the safe area that tracks how big those bars are.
 - `ui/edit_transaction_popup.py`: Self contained class that handles transaction editing.
 - `ui/entry_row.py`: Self contained class that handles transaction entry rows (tap to edit).
 - `ui/expanding_popup.py`: Self contained base class for popups that fit their content and grow downward (top edge stays put) when a section opens.
 - `ui/history_screen.py`: Self contained classes that handle the swipeable budget history screen and its period pages. Pages are built as they come into view and kept between visits, so only periods whose numbers changed are rebuilt.
 - `ui/menu_button.py`: Self contained class for the three-bar menu icon button (WIP).
 - `ui/name_edit_popup.py`: Self contained class for renaming a saved retailer or brand.
-- `ui/name_select_popup.py`: Self contained class for the searchable retailer and brand lists (pick, add, rename, remove), plus the functions that keep those lists sorted and matched ignoring case.
+- `ui/name_select_popup.py`: Self contained class for the searchable retailer and brand lists (pick, add, rename, remove; opened from Custom it only manages the list), plus the functions that keep those lists sorted and matched ignoring case.
 - `ui/number_input.py`: Self contained class for numeric text inputs that open the number pad on Android.
 - `ui/page_carousel.py`: Self contained class for swipeable pages, so the main page, history and week screens all share the same swipe settings. A quick flick turns the page even when it's short, and the page finishes sliding at the speed it was flicked.
+- `ui/rounded_button.py`: Self contained class for buttons with rounded corners (rounded as much as the entry rows) that darken while pressed, used for the four buttons at the bottom of the main page.
 - `ui/sort_controls.py`: Self contained classes that handle the transaction sorting menu and sort order toggle.
 - `ui/spending_chart.py`: Self contained classes for the history screen's circle graphs (spending by category, retailer and brand) and their legends.
 - `ui/week_carousel.py`: Self contained classes that handle the swipeable weekly transaction lists of a budget period.
