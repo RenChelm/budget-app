@@ -52,6 +52,7 @@ class BudgetApp(App):
         self.transactions_file = os.path.join(self.user_data_dir, "transactions.json")
         self.categories_file = os.path.join(self.user_data_dir, "categories.json")
         self.budget_file = os.path.join(self.user_data_dir, "budget.json")
+        self.colors_file = os.path.join(self.user_data_dir, "colors.json")
 
         # Load saved entries from file #
         try:
@@ -80,6 +81,14 @@ class BudgetApp(App):
         except (FileNotFoundError, json.JSONDecodeError):
             self.saved_categories = []
 
+        # Category colors picked from the color wheel, newest first #
+        try:
+            with open(self.colors_file, "r") as f:
+                content = f.read().strip()
+                self.saved_colors = json.loads(content) if content else []
+        except (FileNotFoundError, json.JSONDecodeError):
+            self.saved_colors = []
+
         # Retailers and brands the user has added for the Advanced section (retailers.json, brands.json) #
         self.saved_names = {}
         self.names_files = {kind: os.path.join(self.user_data_dir, f"{kind}s.json") for kind in NAME_KINDS}
@@ -87,7 +96,8 @@ class BudgetApp(App):
             try:
                 with open(path, "r") as f:
                     content = f.read().strip()
-                    self.saved_names[kind] = json.loads(content) if content else []
+                    entries = json.loads(content) if content else []
+                    self.saved_names[kind] = [entry if isinstance(entry, dict) else {"name": entry, "color": None} for entry in entries]
             except (FileNotFoundError, json.JSONDecodeError):
                 self.saved_names[kind] = []
 

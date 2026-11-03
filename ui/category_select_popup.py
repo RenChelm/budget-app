@@ -8,6 +8,7 @@ from kivy.metrics import dp
 
 from ui.category_edit_popup import CategoryEditPopup
 from ui.color_utils import contrast_color
+from ui.name_select_popup import hint_label, search_box
 
 DEFAULT_CATEGORIES = [
     {"name": "Food",          "color": [1, 0.6, 0.2, 1]},
@@ -24,6 +25,10 @@ class CategorySelectPopup(Popup):
         self.category_btn = category_btn
 
         outer_layout = BoxLayout(orientation="vertical", padding=dp(10), spacing=dp(10))
+
+        # At the very top like the retailer and brand lists, so the keyboard never covers it or the closest matches #
+        self.search_input = search_box("Search categories")
+        self.search_input.bind(text=lambda inst, val: self._populate_list())
 
         self.list_layout = BoxLayout(orientation="vertical", padding=dp(10), spacing=dp(10), size_hint_y=None)
         self.list_layout.bind(minimum_height=self.list_layout.setter('height'))
@@ -42,6 +47,7 @@ class CategorySelectPopup(Popup):
 
         scroll = ScrollView()
         scroll.add_widget(self.list_layout)
+        outer_layout.add_widget(self.search_input)
         outer_layout.add_widget(scroll)
         outer_layout.add_widget(new_category_btn)
 
@@ -52,8 +58,14 @@ class CategorySelectPopup(Popup):
 
     def _populate_list(self):
         self.list_layout.clear_widgets()
+        key = self.search_input.text.strip().casefold()
+        saved = [cat for cat in self.app.saved_categories if key in cat["name"].casefold()]
+        defaults = [cat for cat in DEFAULT_CATEGORIES if key in cat["name"].casefold()]
 
-        for cat in self.app.saved_categories:
+        if not saved and not defaults:
+            self.list_layout.add_widget(hint_label("No matches"))
+
+        for cat in saved:
             row = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(4))
 
             cat_btn = Button(
@@ -89,7 +101,7 @@ class CategorySelectPopup(Popup):
             row.add_widget(edit_btn)
             self.list_layout.add_widget(row)
 
-        for cat in DEFAULT_CATEGORIES:
+        for cat in defaults:
             btn = Button(
                 text=cat["name"],
                 background_normal="",
@@ -102,7 +114,8 @@ class CategorySelectPopup(Popup):
             self.list_layout.add_widget(btn)
 
     def _open_add_popup(self):
-        CategoryEditPopup(self.app, on_save=self._on_add_save).open()
+        # Starts with whatever was searched for, so a search that found nothing is one tap from being added #
+        CategoryEditPopup(self.app, on_save=self._on_add_save, initial_name=self.search_input.text.strip()).open()
 
     def _on_add_save(self, new_category, _):
         self.app.saved_categories.insert(0, new_category)

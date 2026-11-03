@@ -59,7 +59,7 @@ def test_text_boxes_that_open_the_keyboard_all_use_text_box(tmp_path, kivy_windo
 
     from ui.add_transaction_popup import AddTransactionPopup
     from ui.edit_transaction_popup import EditTransactionPopup
-    from ui.name_edit_popup import NameEditPopup
+    from ui.category_edit_popup import CategoryEditPopup
     from ui.name_select_popup import NameSelectPopup
     from ui.number_input import NumberInput
 
@@ -75,4 +75,4 @@ def test_text_boxes_that_open_the_keyboard_all_use_text_box(tmp_path, kivy_windo
     names_app = SimpleNamespace(saved_names={"retailer": [], "brand": []})
     for kind in ("retailer", "brand"):
         assert isinstance(NameSelectPopup(names_app, kind, on_select=print).search_input, TextBox)
-    assert isinstance(NameEditPopup("Retailer", "Walmart", on_save=print).name_input, TextBox)
+    assert isinstance(CategoryEditPopup(None, on_save=print, label="Retailer/Platform", color_optional=True).name_input, TextBox)

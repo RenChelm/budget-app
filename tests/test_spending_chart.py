@@ -124,6 +124,12 @@ def test_name_slices_take_the_palette_in_order_biggest_first():
     assert [s["color"] for s in slices] == SERIES_COLORS[:3]
 
 
+def test_name_slices_use_a_names_own_color_and_the_palette_for_the_rest():
+    slices = name_slices([{**named("Walmart", 50.0), "color": [0.9, 0.3, 0.3, 1]}, named("Target", 30.0), {**named("Aldi", 20.0), "color": None}])
+
+    assert [s["color"] for s in slices] == [[0.9, 0.3, 0.3, 1], SERIES_COLORS[1], SERIES_COLORS[2]]
+
+
 def test_name_slices_skip_refunded_names_without_skipping_a_color():
     slices = name_slices([named("Walmart", 50.0), named("Target", -5.0), named("Aldi", 20.0)])
 
@@ -149,7 +155,7 @@ def test_neighboring_slices_never_share_a_color():
         assert all(colors[i] != colors[i - 1] for i in range(len(colors)))
 
 
-@pytest.mark.parametrize("kind, title", [("retailer", "Spending by Retailer"), ("brand", "Spending by Brand")])
+@pytest.mark.parametrize("kind, title", [("retailer", "Spending by Retailer/Platform"), ("brand", "Spending by Brand/Creator")])
 def test_name_chart_is_titled_for_its_kind(kivy_window, kind, title):
     chart = NameChart(kind, [named("Walmart", 10.0)], spent=10.0)
 
@@ -161,7 +167,7 @@ def test_name_chart_rings_only_spending_that_has_a_name_and_notes_the_rest(kivy_
 
     assert chart.ring.total_label.text == "$40.00"
     assert [r.share_label.text for r in chart.legend_rows] == ["75%", "25%"]
-    assert chart.note_label.text == "Not counting $25.50 with no retailer"
+    assert chart.note_label.text == "Not counting $25.50 with no retailer/platform"
 
 
 def test_name_chart_has_no_note_when_everything_has_a_name(kivy_window):
@@ -175,7 +181,7 @@ def test_name_chart_with_nothing_named_shows_how_to_add_one_instead_of_a_ring(ki
 
     assert chart.ring is None
     assert chart.legend_rows == []
-    assert chart.note_label.text == "Nothing here has a brand yet. Pick one under Advanced when adding or editing a transaction."
+    assert chart.note_label.text == "Nothing here has a brand/creator yet. Pick one under Advanced when adding or editing a transaction."
 
 
 def test_name_chart_is_tall_enough_for_a_wrapped_message(kivy_window):

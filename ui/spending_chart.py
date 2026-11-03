@@ -23,7 +23,7 @@ LEGEND_ROW_HEIGHT = dp(26)
 SECTION_SPACING = dp(8)
 CHART_GAP = dp(12)
 
-# Retailers and brands have no colors of their own, so slices take these in order, biggest first #
+# Retailers and brands without a color of their own take these in order, biggest first #
 # In this order every pair of neighbors around the ring (including last back to first, and Other's gray) #
 # stays apart for color-blind viewers too, checked against the app's green background #
 SERIES_COLORS = [get_color_from_hex(h) for h in ("#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300")]
@@ -48,10 +48,11 @@ def chart_slices(categories, limit=MAX_SLICES):
     ]
 
 def name_slices(totals, limit=MAX_SLICES):
-    # Retailer or brand slices, colored by size so neighboring slices always differ (see SERIES_COLORS) #
+    # Retailer or brand slices in the color picked for them, or else by size so neighbors differ (see SERIES_COLORS) #
     # Names past the palette are always folded into Other, so they never need a color of their own #
     spending = [total for total in totals if total["amount"] > 0]
-    colored = [{**total, "color": SERIES_COLORS[i] if i < len(SERIES_COLORS) else OTHER_COLOR} for i, total in enumerate(spending)]
+    fallback = lambda i: SERIES_COLORS[i] if i < len(SERIES_COLORS) else OTHER_COLOR
+    colored = [{**total, "color": total.get("color") or fallback(i)} for i, total in enumerate(spending)]
     return chart_slices(colored, limit)
 
 ## DONUT RING (SLICES CLOCKWISE FROM THE TOP, BIGGEST FIRST, TOTAL IN THE MIDDLE) ##

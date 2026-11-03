@@ -5,7 +5,7 @@ from kivy.uix.button import Button
 from kivy.uix.stencilview import StencilView
 from kivy.metrics import dp
 
-from ui.name_select_popup import NAME_KINDS, NameSelectPopup, fit_text
+from ui.name_select_popup import NAME_KINDS, NameSelectPopup, fit_text, name_color, show_color
 
 ROW_HEIGHT = dp(44)
 ROW_SPACING = dp(10)
@@ -103,11 +103,14 @@ class AdvancedSection(BoxLayout):
             self.reveal.height = height
 
     def open_picker(self, kind):
-        NameSelectPopup(
+        picker = NameSelectPopup(
             self.app, kind,
             on_select=lambda name: self.set_choice(kind, name),
             on_rename=lambda old, new: self._on_rename(kind, old, new)
-        ).open()
+        )
+        # The picked name's color may have been changed or removed in the list #
+        picker.bind(on_dismiss=lambda inst: self._show_choice(kind))
+        picker.open()
 
     def set_choice(self, kind, name):
         self.choices[kind] = name
@@ -120,4 +123,8 @@ class AdvancedSection(BoxLayout):
 
     def _show_choice(self, kind):
         label, name = NAME_KINDS[kind], self.choices[kind]
-        self.choice_btns[kind].text = f"{label}: {name}" if name else f"Select {label} (Optional)"
+        self.choice_btns[kind].text = f"{label}: {name}" if name else f"Select {label}"
+
+        # Takes the name's color like the category button does #
+        saved = getattr(self.app, "saved_names", {}).get(kind, [])
+        show_color(self.choice_btns[kind], name_color(saved, name))

@@ -74,20 +74,49 @@ def test_build_handles_missing_files(tmp_path, kivy_window):
     assert instance.saved_amounts == []
     assert instance.saved_categories == []
     assert instance.saved_names == {"retailer": [], "brand": []}
+    assert instance.saved_colors == []
+
+
+def test_build_loads_saved_custom_colors(tmp_path, kivy_window):
+    from main import BudgetApp
+
+    (tmp_path / "colors.json").write_text(json.dumps([[0.8, 0.4, 0.4, 1]]))
+
+    instance = BudgetApp()
+    instance._user_data_dir = str(tmp_path)
+    instance.build()
+
+    assert instance.saved_colors == [[0.8, 0.4, 0.4, 1]]
+    assert instance.colors_file == str(tmp_path / "colors.json")
 
 
 def test_build_loads_saved_retailers_and_brands(tmp_path, kivy_window):
     from main import BudgetApp
 
-    (tmp_path / "retailers.json").write_text(json.dumps(["Target", "Walmart"]))
+    (tmp_path / "retailers.json").write_text(json.dumps([{"name": "Target", "color": [0.9, 0.3, 0.3, 1]}, {"name": "Walmart", "color": None}]))
     (tmp_path / "brands.json").write_text("{not valid json")
 
     instance = BudgetApp()
     instance._user_data_dir = str(tmp_path)
     instance.build()
 
-    assert instance.saved_names == {"retailer": ["Target", "Walmart"], "brand": []}
+    assert instance.saved_names == {
+        "retailer": [{"name": "Target", "color": [0.9, 0.3, 0.3, 1]}, {"name": "Walmart", "color": None}],
+        "brand": [],
+    }
     assert instance.names_files == {"retailer": str(tmp_path / "retailers.json"), "brand": str(tmp_path / "brands.json")}
+
+
+def test_build_loads_older_lists_of_plain_names_as_names_with_no_color(tmp_path, kivy_window):
+    from main import BudgetApp
+
+    (tmp_path / "brands.json").write_text(json.dumps(["Lay's", "Nike"]))
+
+    instance = BudgetApp()
+    instance._user_data_dir = str(tmp_path)
+    instance.build()
+
+    assert instance.saved_names["brand"] == [{"name": "Lay's", "color": None}, {"name": "Nike", "color": None}]
 
 
 def test_build_loads_older_transactions_without_retailer_or_brand(tmp_path, kivy_window):

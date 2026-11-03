@@ -60,7 +60,7 @@ def test_lists_categories_retailers_and_brands_in_that_order(kivy_window):
     popup = CustomPopup(FakeApp())
 
     buttons = [w for w in reversed(popup.content.children)]
-    assert [b.text for b in buttons] == ["Categories", "Retailers", "Brands"]
+    assert [b.text for b in buttons] == ["Categories", "Retailers/Platforms", "Brands/Creators"]
     assert all(isinstance(b, RoundedButton) for b in buttons)
     assert popup.title == "Custom"
 

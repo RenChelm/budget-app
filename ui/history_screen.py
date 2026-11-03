@@ -12,6 +12,7 @@ from budget_periods import format_money, format_period, history_periods
 from ui.back_screen import BackScreen
 from ui.carry_over_button import CarryOverButton
 from ui.page_carousel import PageCarousel
+from ui.name_select_popup import name_color
 from ui.spending_chart import CategoryChart, NameChart
 from ui.week_row import WeekRow
 
@@ -170,6 +171,14 @@ class HistoryScreen(BackScreen):
         settings = self.app.budget_settings
         mode = settings["mode"]
         periods = history_periods(self.app.saved_amounts, settings, now or datetime.now())
+
+        # Retailers and brands keep their colors in their lists, not on transactions; adding them here also #
+        # makes a color change count as a change to the page, so its graphs get redrawn #
+        saved_names = getattr(self.app, "saved_names", {})
+        for period in periods:
+            for kind, key in (("retailer", "retailers"), ("brand", "brands")):
+                for total in period[key]:
+                    total["color"] = name_color(saved_names.get(kind, []), total["name"])
 
         # Pages are kept between visits; only a period whose numbers changed (or whose neighbors did) gets a new page #
         cached = {page.period["start"]: page for page in self.carousel.slides}

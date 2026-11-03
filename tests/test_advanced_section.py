@@ -50,10 +50,17 @@ def opened_pickers(monkeypatch):
     class FakePicker:
         def __init__(self, app, kind, on_select, on_rename=None):
             self.kind, self.on_select, self.on_rename = kind, on_select, on_rename
+            self.on_dismiss = None
             opened.append(self)
+
+        def bind(self, on_dismiss):
+            self.on_dismiss = on_dismiss
 
         def open(self):
             pass
+
+        def dismiss(self):
+            self.on_dismiss(self)
 
     monkeypatch.setattr(advanced_section, "NameSelectPopup", FakePicker)
     return opened
@@ -101,8 +108,8 @@ def test_add_popup_starts_with_advanced_closed(tmp_path, kivy_window):
 def test_retailer_and_brand_start_unpicked_with_no_default(tmp_path, kivy_window):
     popup = AddTransactionPopup(FakeApp(tmp_path))
 
-    assert popup.advanced.choice_btns["retailer"].text == "Select Retailer (Optional)"
-    assert popup.advanced.choice_btns["brand"].text == "Select Brand (Optional)"
+    assert popup.advanced.choice_btns["retailer"].text == "Select Retailer/Platform"
+    assert popup.advanced.choice_btns["brand"].text == "Select Brand/Creator"
 
 
 def test_hidden_retailer_and_brand_cant_be_tapped(tmp_path, kivy_window, opened_pickers):
@@ -202,8 +209,8 @@ def test_picking_shows_the_name_on_its_button(tmp_path, kivy_window):
     section.set_choice("retailer", "Walmart")
     section.set_choice("brand", "Lay's")
 
-    assert section.choice_btns["retailer"].text == "Retailer: Walmart"
-    assert section.choice_btns["brand"].text == "Brand: Lay's"
+    assert section.choice_btns["retailer"].text == "Retailer/Platform: Walmart"
+    assert section.choice_btns["brand"].text == "Brand/Creator: Lay's"
 
 
 def test_picking_no_retailer_clears_it(tmp_path, kivy_window):
@@ -212,7 +219,7 @@ def test_picking_no_retailer_clears_it(tmp_path, kivy_window):
     section.set_choice("retailer", None)
 
     assert section.choices["retailer"] is None
-    assert section.choice_btns["retailer"].text == "Select Retailer (Optional)"
+    assert section.choice_btns["retailer"].text == "Select Retailer/Platform"
 
 
 def test_picker_choice_lands_on_the_right_field(tmp_path, kivy_window, opened_pickers):
@@ -232,6 +239,32 @@ def test_renaming_the_picked_name_keeps_it_picked(tmp_path, kivy_window, opened_
     opened_pickers[-1].on_rename("Target", "Tarjay")
 
     assert section.choices["retailer"] == "Walmart"
+
+
+def test_picked_names_show_their_color_like_a_category(tmp_path, kivy_window):
+    app = FakeApp(tmp_path)
+    app.saved_names = {"retailer": [{"name": "Target", "color": [0.9, 0.3, 0.3, 1]}], "brand": [{"name": "Lay's", "color": None}]}
+    section = AdvancedSection(app, retailer="Target", brand="Lay's")
+    retailer_btn, brand_btn = section.choice_btns["retailer"], section.choice_btns["brand"]
+
+    assert (retailer_btn.background_normal, list(retailer_btn.background_color)) == ("", [0.9, 0.3, 0.3, 1])
+    assert tuple(retailer_btn.color) == (1, 1, 1, 1)
+    assert brand_btn.background_normal != ""        # No color picked: plain button look
+
+    section.set_choice("retailer", None)
+    assert retailer_btn.background_normal != ""
+
+
+def test_a_color_changed_in_the_list_shows_once_it_closes(tmp_path, kivy_window, opened_pickers):
+    app = FakeApp(tmp_path)
+    app.saved_names = {"retailer": [{"name": "Target", "color": None}], "brand": []}
+    section = AdvancedSection(app, retailer="Target")
+
+    section.open_picker("retailer")
+    app.saved_names["retailer"] = [{"name": "Target", "color": [0.3, 0.6, 0.9, 1]}]
+    opened_pickers[-1].dismiss()
+
+    assert list(section.choice_btns["retailer"].background_color) == [0.3, 0.6, 0.9, 1]
 
 
 ## SAVING ##
@@ -292,7 +325,7 @@ def test_edit_shows_the_transactions_retailer_and_brand(tmp_path, kivy_window):
     popup = EditTransactionPopup(app, 0)
 
     assert popup.advanced.choices == {"retailer": "Walmart", "brand": "Lay's"}
-    assert popup.advanced.choice_btns["retailer"].text == "Retailer: Walmart"
+    assert popup.advanced.choice_btns["retailer"].text == "Retailer/Platform: Walmart"
 
 
 def test_edit_opened_with_advanced_sits_where_add_would_after_opening_it(tmp_path, kivy_window):

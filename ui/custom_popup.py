@@ -3,7 +3,7 @@ from kivy.metrics import dp
 
 from ui.category_select_popup import CategorySelectPopup
 from ui.expanding_popup import ExpandingPopup
-from ui.name_select_popup import NameSelectPopup
+from ui.name_select_popup import NAME_KIND_PLURALS, NameSelectPopup
 from ui.rounded_button import RoundedButton
 
 ## PICKS WHICH OF THE USER'S OWN LISTS TO OPEN: CATEGORIES, RETAILERS OR BRANDS ##
@@ -18,8 +18,8 @@ class CustomPopup(ExpandingPopup):
         self.buttons = {}
         for key, text, open_menu in (
             ("categories", "Categories", lambda: CategorySelectPopup(self.app).open()),
-            ("retailers", "Retailers", lambda: NameSelectPopup(self.app, "retailer").open()),
-            ("brands", "Brands", lambda: NameSelectPopup(self.app, "brand").open()),
+            ("retailers", NAME_KIND_PLURALS["retailer"], lambda: NameSelectPopup(self.app, "retailer").open()),
+            ("brands", NAME_KIND_PLURALS["brand"], lambda: NameSelectPopup(self.app, "brand").open()),
         ):
             btn = RoundedButton(
                 text=text,

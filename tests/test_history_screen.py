@@ -6,6 +6,7 @@ from budget_periods import summarize_week
 from ui.budget_popup import BudgetPopup
 from ui.entry_row import BORDER_WIDTH
 from ui.history_screen import HistoryScreen, PeriodPage
+from ui.spending_chart import SERIES_COLORS
 from ui.week_row import (
     CURRENT_BORDER_WIDTH,
     OVER_BORDER_WIDTH,
@@ -272,9 +273,21 @@ def test_each_page_breaks_down_its_own_periods_spending_by_retailer_and_brand(ki
     ]
     assert current.retailer_chart.note_label is None
     assert [r.name_label.text for r in current.brand_chart.legend_rows] == ["Lay's"]
-    assert current.brand_chart.note_label.text == "Not counting $10.00 with no brand"
+    assert current.brand_chart.note_label.text == "Not counting $10.00 with no brand/creator"
     assert [r.name_label.text for r in older.retailer_chart.legend_rows] == ["Costco"]
     assert older.brand_chart.ring is None
+
+
+def test_retailer_and_brand_slices_take_their_saved_colors(kivy_window):
+    app = FakeApp(saved_amounts=[
+        {**make_entry(30.0, datetime(2026, 10, 16)), "retailer": "Walmart", "brand": "Lay's"},
+        {**make_entry(10.0, datetime(2026, 10, 17)), "retailer": "Target", "brand": None},
+    ])
+    app.saved_names = {"retailer": [{"name": "Target", "color": [0.9, 0.3, 0.3, 1]}], "brand": [{"name": "Lay's", "color": None}]}
+    current = _history_screen(app).carousel.current_slide
+
+    assert [s["color"] for s in current.retailer_chart.slices] == [SERIES_COLORS[0], [0.9, 0.3, 0.3, 1]]
+    assert [s["color"] for s in current.brand_chart.slices] == [SERIES_COLORS[0]]
 
 
 def test_charts_run_category_then_retailer_then_brand_under_the_weeks(kivy_window):
@@ -531,6 +544,19 @@ def test_budget_category_and_retailer_changes_rebuild_the_pages_they_show_on(kiv
     current = screen.carousel.current_slide
 
     change(app)
+    screen.refresh(now=NOW)
+
+    assert screen.carousel.current_slide is not current
+
+
+def test_changing_a_retailers_color_rebuilds_the_pages_it_shows_on(kivy_window):
+    app = _three_periods()
+    app.saved_amounts[1]["retailer"] = "Walmart"
+    app.saved_names = {"retailer": [{"name": "Walmart", "color": None}], "brand": []}
+    screen = _history_screen(app)
+    current = screen.carousel.current_slide
+
+    app.saved_names["retailer"][0]["color"] = [0.3, 0.6, 0.9, 1]
     screen.refresh(now=NOW)
 
     assert screen.carousel.current_slide is not current

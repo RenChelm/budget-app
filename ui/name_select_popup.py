@@ -7,40 +7,50 @@ from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
 from kivy.metrics import dp
 
-from ui.name_edit_popup import NameEditPopup
+from ui.category_edit_popup import CategoryEditPopup
+from ui.color_utils import contrast_color
 from ui.text_box import TextBox
 
 # Optional transaction details picked from a saved list; there are no defaults, the user adds every one #
-NAME_KINDS = {"retailer": "Retailer", "brand": "Brand"}
+NAME_KINDS = {"retailer": "Retailer/Platform", "brand": "Brand/Creator"}
+NAME_KIND_PLURALS = {"retailer": "Retailers/Platforms", "brand": "Brands/Creators"}
 
 ## SAVED NAME LISTS (KEPT A-Z, MATCHED IGNORING CASE) ##
+# Each entry is {"name": ..., "color": [r, g, b, a] or None}; picking a color is optional #
+# Transactions store just the name, so a color change shows everywhere at once #
 
-def _sorted(names):
-    return sorted(names, key=str.casefold)
+def _sorted(entries):
+    return sorted(entries, key=lambda entry: entry["name"].casefold())
 
-def find_name(names, name):
-    # The saved spelling of `name` ignoring case, or None #
+def find_entry(entries, name):
+    # The saved entry for `name` ignoring case, or None #
     key = name.casefold()
-    return next((saved for saved in names if saved.casefold() == key), None)
+    return next((entry for entry in entries if entry["name"].casefold() == key), None)
 
-def matching_names(names, query):
+def name_color(entries, name):
+    # The color picked for `name`, or None if it has none or is no longer in the list #
+    entry = find_entry(entries, name) if name else None
+    return entry["color"] if entry else None
+
+def matching_entries(entries, query):
     key = query.strip().casefold()
-    return _sorted(name for name in names if key in name.casefold())
+    return _sorted(entry for entry in entries if key in entry["name"].casefold())
 
-def add_name(names, name):
-    # Returns the new list and the name to use; one already saved in a different case is reused instead #
-    existing = find_name(names, name)
+def add_entry(entries, name, color=None):
+    # Returns the new list and the name to use; one already saved in a different case is reused as it is #
+    existing = find_entry(entries, name)
     if existing is not None:
-        return names, existing
-    return _sorted(names + [name]), name
+        return entries, existing["name"]
+    return _sorted(entries + [{"name": name, "color": color}]), name
 
-def rename_name(names, old, new):
-    # Renaming onto another saved name merges the two #
-    others = [name for name in names if name != old]
-    existing = find_name(others, new)
+def edit_entry(entries, old, new, color):
+    # Renaming onto another saved name merges the two, keeping the color just picked #
+    others = [entry for entry in entries if entry["name"] != old]
+    existing = find_entry(others, new)
     if existing is not None:
-        return others, existing
-    return _sorted(others + [new]), new
+        others.remove(existing)
+        new = existing["name"]
+    return _sorted(others + [{"name": new, "color": color}]), new
 
 ## PICK, ADD, RENAME OR REMOVE A RETAILER OR BRAND ##
 
@@ -50,6 +60,7 @@ class NameSelectPopup(Popup):
         self.app = app
         self.kind = kind
         self.label = NAME_KINDS[kind]
+        self.plural = NAME_KIND_PLURALS[kind]
         self.on_select = on_select
         self.on_rename = on_rename
 
@@ -59,14 +70,8 @@ class NameSelectPopup(Popup):
         outer_layout = BoxLayout(orientation="vertical", padding=dp(10), spacing=dp(10))
 
         # At the very top so the keyboard never covers what's being typed or the closest matches under it #
-        self.search_input = TextBox(
-            hint_text=f"Search or add {self.label.lower()}",
-            multiline=False,
-            size_hint_y=None,
-            height=dp(40)
-        )
+        self.search_input = search_box(f"Search {self.plural.lower()}")
         self.search_input.bind(text=lambda inst, val: self._populate_list())
-        self.search_input.bind(on_text_validate=lambda inst: self._submit())
 
         self.list_layout = BoxLayout(orientation="vertical", padding=dp(10), spacing=dp(10), size_hint_y=None)
         self.list_layout.bind(minimum_height=self.list_layout.setter("height"))
@@ -81,6 +86,17 @@ class NameSelectPopup(Popup):
             )
             self.clear_btn.bind(on_release=lambda x: self._select(None))
 
+        # At the bottom like New Category, so it sits in the same spot in every list #
+        self.new_btn = Button(
+            text=f"New {self.label}",
+            size_hint_y=None,
+            height=dp(40),
+            background_normal="",
+            background_color=(0.51765, 0.878, 0.737, 1),
+            color=(0, 0, 0, 1)
+        )
+        self.new_btn.bind(on_release=lambda x: self._open_add_popup())
+
         self._populate_list()
 
         scroll = ScrollView()
@@ -89,8 +105,9 @@ class NameSelectPopup(Popup):
         outer_layout.add_widget(scroll)
         if self.clear_btn is not None:
             outer_layout.add_widget(self.clear_btn)
+        outer_layout.add_widget(self.new_btn)
 
-        self.title = f"Select {self.label}" if self.picking else f"Manage {self.label}s"
+        self.title = f"Select {self.label}" if self.picking else f"Manage {self.plural}"
         self.title_color = (1, 1, 1, 1)
         self.content = outer_layout
         self.size_hint = (0.8, 0.84)
@@ -103,24 +120,13 @@ class NameSelectPopup(Popup):
         self.list_layout.clear_widgets()
         query = self.search_input.text.strip()
 
-        # A typed name that isn't saved yet is added straight from the search, first in the list so it's in view #
-        self.add_btn = None
-        if query and find_name(self.names, query) is None:
-            self.add_btn = fit_text(Button(
-                text=f'+ Add "{query}"',
-                size_hint_y=None,
-                height=dp(40),
-                background_normal="",
-                background_color=(0.51765, 0.878, 0.737, 1),
-                color=(0, 0, 0, 1)
-            ))
-            self.add_btn.bind(on_release=lambda inst: self._add(query))
-            self.list_layout.add_widget(self.add_btn)
-
-        for name in matching_names(self.names, query):
+        matches = matching_entries(self.names, query)
+        for entry in matches:
+            name = entry["name"]
             row = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(4))
 
             name_btn = fit_text(Button(text=name, color=(1, 1, 1, 1)))
+            show_color(name_btn, entry["color"])
             name_btn.bind(on_release=lambda inst, n=name: self._tap_name(n))
 
             delete_btn = Button(
@@ -148,28 +154,8 @@ class NameSelectPopup(Popup):
             row.add_widget(edit_btn)
             self.list_layout.add_widget(row)
 
-        if not self.names and not query:
-            empty_label = Label(
-                text=f"No {self.label.lower()}s yet. Type one above to add it.",
-                size_hint_y=None,
-                height=dp(40),
-                halign="center",
-                valign="middle",
-                color=(1, 1, 1, 0.6)
-            )
-            empty_label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
-            self.list_layout.add_widget(empty_label)
-
-    def _submit(self):
-        # The keyboard's Enter picks the typed name, adding it if it's new #
-        query = self.search_input.text.strip()
-        if not query:
-            return
-        existing = find_name(self.names, query)
-        if existing is None:
-            self._add(query)
-        elif self.picking:
-            self._select(existing)
+        if query and not matches:
+            self.list_layout.add_widget(hint_label("No matches"))
 
     def _tap_name(self, name):
         # There's nothing to pick a name for when managing the list, so tapping it renames it like Edit does #
@@ -182,8 +168,19 @@ class NameSelectPopup(Popup):
         self.on_select(name)
         self.dismiss()
 
-    def _add(self, name):
-        names, name = add_name(self.names, name)
+    def _open_add_popup(self):
+        # Same name and color popup as a category; starts with whatever was searched for, #
+        # so a search that found nothing is one tap from being added #
+        CategoryEditPopup(
+            self.app,
+            on_save=lambda entry, _: self._add(entry["name"], entry["color"]),
+            initial_name=self.search_input.text.strip(),
+            label=self.label,
+            color_optional=True
+        ).open()
+
+    def _add(self, name, color=None):
+        names, name = add_entry(self.names, name, color)
         self.app.saved_names[self.kind] = names
         self._save_names()
         if self.picking:
@@ -191,18 +188,25 @@ class NameSelectPopup(Popup):
         else:
             # Stays open for adding more; clearing the search shows the whole list, the new name included #
             self.search_input.text = ""
+            self._populate_list()
 
     def _delete(self, name):
         # Only removes it from the list; transactions that used it keep it #
-        self.app.saved_names[self.kind] = [n for n in self.names if n != name]
+        self.app.saved_names[self.kind] = [entry for entry in self.names if entry["name"] != name]
         self._save_names()
         self._populate_list()
 
     def _open_edit_popup(self, name):
-        NameEditPopup(self.label, name, on_save=lambda new_name: self._on_edit_save(name, new_name)).open()
+        CategoryEditPopup(
+            self.app,
+            on_save=lambda entry, _: self._on_edit_save(name, entry["name"], entry["color"]),
+            existing_category=find_entry(self.names, name),
+            label=self.label,
+            color_optional=True
+        ).open()
 
-    def _on_edit_save(self, old_name, new_name):
-        names, new_name = rename_name(self.names, old_name, new_name)
+    def _on_edit_save(self, old_name, new_name, color=None):
+        names, new_name = edit_entry(self.names, old_name, new_name, color)
         self.app.saved_names[self.kind] = names
 
         for entry in self.app.saved_amounts:
@@ -221,6 +225,35 @@ class NameSelectPopup(Popup):
     def _save_names(self):
         with open(self.app.names_files[self.kind], "w") as f:
             json.dump(self.names, f)
+
+def search_box(hint_text):
+    # Only filters the list; new entries are added with the New button #
+    return TextBox(hint_text=hint_text, multiline=False, size_hint_y=None, height=dp(40))
+
+def hint_label(text):
+    # Dimmed note in place of the list when there's nothing to show #
+    label = Label(
+        text=text,
+        size_hint_y=None,
+        height=dp(40),
+        halign="center",
+        valign="middle",
+        color=(1, 1, 1, 0.6)
+    )
+    label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
+    return label
+
+def show_color(btn, color):
+    # Fills the button with a picked color like a category's, or puts back the plain button look #
+    if color:
+        btn.background_normal = ""
+        btn.background_color = color
+        btn.color = contrast_color(color)
+    else:
+        btn.background_normal = "atlas://data/images/defaulttheme/button"
+        btn.background_color = (1, 1, 1, 1)
+        btn.color = (1, 1, 1, 1)
+    return btn
 
 def fit_text(btn):
     # Long names end in "..." instead of running past the button #
