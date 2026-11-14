@@ -1,18 +1,17 @@
-import json
-
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.metrics import dp
 
 from datetime import datetime
 
-from ui.advanced_section import AdvancedSection
-from ui.category_select_popup import CategorySelectPopup
-from ui.date_input import DateInput
-from ui.expanding_popup import ExpandingPopup
-from ui.number_input import NumberInput
-from ui.text_box import TextBox
-from ui.color_utils import CONFIRM_COLOR, contrast_color
+from transactions import update_transaction
+from ui.transactions.advanced_section import AdvancedSection
+from ui.custom.category_select_popup import CategorySelectPopup
+from ui.inputs.date_input import DateInput
+from ui.common.expanding_popup import ExpandingPopup
+from ui.inputs.number_input import NumberInput
+from ui.inputs.text_box import TextBox
+from ui.common.color_utils import CONFIRM_COLOR, contrast_color
 
 class EditTransactionPopup(ExpandingPopup):
     def __init__(self, app, index, **kwargs):
@@ -110,19 +109,21 @@ class EditTransactionPopup(ExpandingPopup):
             return
 
         new_note = new_note.strip()
+        entry = self.app.saved_amounts[index]
+
+        changes = {
+            "amount": new_amount,
+            "category": getattr(self.app, "selected_category", entry["category"]),
+            "note": new_note if new_note else None,
+            "retailer": self.advanced.choices["retailer"],
+            "brand": self.advanced.choices["brand"]
+        }
 
         # A new date keeps the original time of day; blank leaves the date unchanged #
         if new_day:
-            self.app.saved_amounts[index]["timestamp"] = datetime.combine(new_day, self.app.saved_amounts[index]["timestamp"].time())
-        self.app.saved_amounts[index]["amount"] = new_amount
-        self.app.saved_amounts[index]["category"] = getattr(self.app, "selected_category", self.app.saved_amounts[index]["category"])
-        self.app.saved_amounts[index]["note"] = new_note if new_note else None
-        self.app.saved_amounts[index]["retailer"] = self.advanced.choices["retailer"]
-        self.app.saved_amounts[index]["brand"] = self.advanced.choices["brand"]
+            changes["timestamp"] = datetime.combine(new_day, entry["timestamp"].time())
 
-        with open(self.app.transactions_file, "w") as f:
-            json.dump(self.app.saved_amounts, f, default=str)
-
+        self.app.save_transactions(update_transaction(self.app.saved_amounts, index, changes))
         self.app.update_display()
         self.dismiss()  
 

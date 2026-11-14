@@ -8,13 +8,20 @@ from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 
-from ui.category_select_popup import CategorySelectPopup, DEFAULT_CATEGORIES
-from ui.category_edit_popup import CategoryEditPopup, PALETTE, _normalize
-from ui.color_wheel_popup import ColorWheelPopup
-from ui.text_box import TextBox
+from ui.custom.category_select_popup import (
+    CategorySelectPopup,
+    DEFAULT_CATEGORIES,
+    add_category,
+    delete_category,
+    edit_category,
+)
+from ui.custom.category_edit_popup import CategoryEditPopup, PALETTE, _normalize
+from ui.custom.color_wheel_popup import ColorWheelPopup
+from ui.inputs.text_box import TextBox
+from storage import SavedData
 
 
-class FakeApp:
+class FakeApp(SavedData):
     def __init__(self, tmp_path):
         self.saved_categories = []
         self.saved_amounts = []
@@ -214,7 +221,7 @@ def test_save_ignores_blank_name(kivy_window):
 
 ## SAVED CUSTOM COLORS ##
 
-class ColorsApp:
+class ColorsApp(SavedData):
     def __init__(self, tmp_path, saved_colors=()):
         self.saved_colors = [list(c) for c in saved_colors]
         self.colors_file = str(tmp_path / "colors.json")
@@ -365,3 +372,36 @@ def test_many_saved_colors_scroll_so_the_popup_stays_on_screen(kivy_window, tmp_
     assert popup.top <= kivy_window.height
     assert popup.y >= 0
     popup.dismiss(animation=False)
+
+
+## SAVED CATEGORY LIST (EACH CHANGE RETURNS A NEW LIST) ##
+
+GAS = {"name": "Gas", "color": [0.1, 0.2, 0.3, 1]}
+GIFTS = {"name": "Gifts", "color": [0.4, 0.5, 0.6, 1]}
+
+
+def test_add_category_puts_the_new_one_first_and_leaves_the_old_list_as_it_was():
+    categories = [GAS]
+    new = {"name": "Takeout", "color": [0.7, 0.2, 0.2, 1]}
+
+    assert add_category(categories, new) == [new, GAS]
+    assert categories == [GAS]
+
+
+def test_edit_category_takes_the_old_ones_place_and_leaves_the_old_list_as_it_was():
+    categories = [GAS, GIFTS]
+    presents = {"name": "Presents", "color": GIFTS["color"]}
+
+    assert edit_category(categories, "Gifts", presents) == [GAS, presents]
+    assert categories == [GAS, GIFTS]
+
+
+def test_edit_category_no_longer_in_the_list_leaves_it_unchanged():
+    assert edit_category([GAS], "Gifts", {"name": "Presents", "color": None}) == [GAS]
+
+
+def test_delete_category_removes_it_by_name():
+    categories = [GAS, GIFTS]
+
+    assert delete_category(categories, "Gas") == [GIFTS]
+    assert categories == [GAS, GIFTS]

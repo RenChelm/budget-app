@@ -1,7 +1,7 @@
 from kivy.clock import Clock
 from kivy.utils import platform
 
-from ui.text_box import TextBox
+from ui.inputs.text_box import TextBox
 
 # android.text.InputType flags #
 TYPE_CLASS_NUMBER = 2

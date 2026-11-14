@@ -4,8 +4,8 @@ import types
 from kivy.core.window import Window
 
 import main
-import ui.back_swipe as back_swipe
-from ui.back_swipe import filter_back_swipes
+import ui.system.back_swipe as back_swipe
+from ui.system.back_swipe import filter_back_swipes
 
 
 def test_does_nothing_off_android(monkeypatch):

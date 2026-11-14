@@ -11,8 +11,8 @@ from kivy.uix.label import Label
 from kivy.uix.slider import Slider
 from kivy.uix.widget import Widget
 
-from ui.color_utils import contrast_color
-from ui.expanding_popup import ExpandingPopup
+from ui.common.color_utils import contrast_color
+from ui.common.expanding_popup import ExpandingPopup
 
 TEXTURE_SIZE = 128          # Hue and saturation change smoothly, so a small texture stretched over the wheel looks the same
 TOUCH_SLOP = dp(16)         # A drag can start just outside the edge and still lands on it

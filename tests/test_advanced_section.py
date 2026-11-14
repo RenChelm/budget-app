@@ -9,13 +9,14 @@ from kivy.metrics import dp
 from kivy.tests.common import UnitTestTouch
 from kivy.uix.modalview import ModalView
 
-import ui.advanced_section as advanced_section
-from ui.add_transaction_popup import AddTransactionPopup
-from ui.advanced_section import AdvancedSection
-from ui.edit_transaction_popup import EditTransactionPopup
+import ui.transactions.advanced_section as advanced_section
+from ui.transactions.add_transaction_popup import AddTransactionPopup
+from ui.transactions.advanced_section import AdvancedSection
+from ui.transactions.edit_transaction_popup import EditTransactionPopup
+from storage import SavedData
 
 
-class FakeApp:
+class FakeApp(SavedData):
     def __init__(self, tmp_path):
         self.saved_amounts = []
         self.transactions_file = str(tmp_path / "transactions.json")

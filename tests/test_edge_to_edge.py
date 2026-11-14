@@ -10,9 +10,9 @@ from kivy.uix.modalview import ModalView
 from kivy.uix.screenmanager import ScreenManager
 
 import main
-import ui.edge_to_edge as edge_to_edge
-from ui.edge_to_edge import SafeAreaStrip, draw_edge_to_edge, safe_area
-from ui.expanding_popup import SCREEN_MARGIN, ExpandingPopup
+import ui.system.edge_to_edge as edge_to_edge
+from ui.system.edge_to_edge import SafeAreaStrip, draw_edge_to_edge, safe_area
+from ui.common.expanding_popup import SCREEN_MARGIN, ExpandingPopup
 
 SHORT_EDGES = 1
 FLAG_TRANSLUCENT_STATUS = 0x04000000

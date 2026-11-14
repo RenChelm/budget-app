@@ -8,9 +8,10 @@ from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.metrics import dp, sp
 
 from budget_periods import format_range, period_weeks
-from ui.chevron_button import ChevronButton
-from ui.entry_row import ROW_HEIGHT, EntryRow
-from ui.page_carousel import PageCarousel
+from transactions import sorted_transactions
+from ui.buttons.chevron_button import ChevronButton
+from ui.transactions.entry_row import ROW_HEIGHT, EntryRow, row_data
+from ui.common.page_carousel import PageCarousel
 
 ## ONE WEEK OF TRANSACTIONS (HEADER STRIP + LIST) ##
 
@@ -81,7 +82,8 @@ class WeekTransactionsPage(BoxLayout):
     def refresh(self, app, now):
         name = "This Week" if self.start <= now < self.end else f"Week {self.number}"
         self.title_label.text = f"{name} · {format_range(self.start, self.end)}"
-        self.rv.data = app.transaction_rows(self.start, self.end)
+        pairs = sorted_transactions(app.saved_amounts, self.start, self.end, app.sort_by, app.sort_descending)
+        self.rv.data = [row_data(index, entry) for index, entry in pairs]
 
         if self.rv.data:
             self.empty_label.text = ""

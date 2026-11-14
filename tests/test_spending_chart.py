@@ -1,6 +1,6 @@
 import pytest
 
-from ui.spending_chart import (
+from ui.history.spending_chart import (
     MAX_SLICES,
     OTHER_COLOR,
     RING_SIZE,
@@ -11,7 +11,7 @@ from ui.spending_chart import (
     chart_slices,
     name_slices,
 )
-from ui.week_row import UNCATEGORIZED_COLOR
+from ui.history.week_row import UNCATEGORIZED_COLOR
 
 FOOD_COLOR = [1, 0.6, 0.2, 1]
 GAS_COLOR = [0.3, 0.6, 0.9, 1]

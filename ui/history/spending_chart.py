@@ -9,8 +9,8 @@ from kivy.graphics import Color, Line, RoundedRectangle
 from kivy.metrics import dp, sp
 from kivy.utils import get_color_from_hex
 
-from ui.name_select_popup import NAME_KINDS
-from ui.week_row import EMPTY_COLOR, UNCATEGORIZED_COLOR
+from ui.custom.name_select_popup import NAME_KINDS
+from ui.history.week_row import EMPTY_COLOR, UNCATEGORIZED_COLOR
 
 MAX_SLICES = 6                       # Past this, the smallest slices fold into one "Other" slice
 OTHER_COLOR = (0.85, 0.85, 0.85, 1)  # Light gray, so it stands apart from uncategorized's mid gray

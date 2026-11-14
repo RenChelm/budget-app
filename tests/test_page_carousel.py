@@ -3,8 +3,8 @@ import pytest
 from kivy.tests.common import UnitTestTouch
 from kivy.uix.label import Label
 
-import ui.page_carousel as page_carousel
-from ui.page_carousel import (
+import ui.common.page_carousel as page_carousel
+from ui.common.page_carousel import (
     MAX_SETTLE_DURATION,
     MIN_SETTLE_DURATION,
     SWIPE_MIN_MOVE,

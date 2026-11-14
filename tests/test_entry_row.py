@@ -1,9 +1,11 @@
+from datetime import datetime
+
 import pytest
 
 from kivy.app import App
 from kivy.tests.common import UnitTestTouch
 
-from ui.entry_row import EntryRow
+from ui.transactions.entry_row import UNCATEGORIZED_ROW_COLOR, EntryRow, row_data
 
 
 @pytest.fixture
@@ -76,8 +78,8 @@ def test_long_list_keeps_one_height_while_scrolling(kivy_window):
     # each time a new row scrolled into view #
     from datetime import datetime
     from kivy.clock import Clock
-    from ui.entry_row import ROW_HEIGHT
-    from ui.week_carousel import WeekTransactionsPage
+    from ui.transactions.entry_row import ROW_HEIGHT
+    from ui.transactions.week_carousel import WeekTransactionsPage
 
     class StubCarousel:
         def load_previous(self):
@@ -104,3 +106,24 @@ def test_long_list_keeps_one_height_while_scrolling(kivy_window):
         assert heights == {150 * ROW_HEIGHT}
     finally:
         kivy_window.remove_widget(page)
+
+
+## ROW DATA FOR ONE TRANSACTION ##
+
+def test_row_data_formats_a_categorized_transaction():
+    entry = {"amount": 4.5, "timestamp": datetime(2026, 10, 3, 18, 5), "category": {"name": "Food", "color": [1, 0.6, 0.2, 1]}, "note": "lunch"}
+
+    assert row_data(7, entry) == {
+        "timestamp_text": "Oct 03, 06:05 PM",
+        "category_text": "Food",
+        "amount_text": "$4.50",
+        "note_text": "lunch",
+        "index": 7,
+        "category_color": [1, 0.6, 0.2, 1],
+    }
+
+
+def test_row_data_for_an_uncategorized_transaction_without_a_note():
+    row = row_data(0, {"amount": 2.0, "timestamp": datetime(2026, 10, 3, 9, 0), "category": None, "note": None})
+
+    assert (row["category_text"], row["category_color"], row["note_text"]) == ("Uncategorized", UNCATEGORIZED_ROW_COLOR, "")

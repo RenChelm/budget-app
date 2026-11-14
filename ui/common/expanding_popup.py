@@ -1,7 +1,7 @@
 from kivy.metrics import dp
 from kivy.uix.popup import Popup
 
-from ui.edge_to_edge import safe_area
+from ui.system.edge_to_edge import safe_area
 
 POPUP_CHROME = dp(28)       # Popup's own 12dp padding above and below its content, plus the 4dp title separator
 SCREEN_MARGIN = dp(8)

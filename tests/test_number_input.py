@@ -3,8 +3,8 @@ import types
 
 import pytest
 
-import ui.number_input as number_input
-from ui.number_input import NumberInput, TYPE_CLASS_NUMBER, TYPE_NUMBER_FLAG_DECIMAL
+import ui.inputs.number_input as number_input
+from ui.inputs.number_input import NumberInput, TYPE_CLASS_NUMBER, TYPE_NUMBER_FLAG_DECIMAL
 
 
 def test_decimal_input_requests_number_keyboard_and_filters_floats(kivy_window):

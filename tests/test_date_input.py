@@ -5,8 +5,8 @@ import pytest
 from kivy.clock import Clock
 from kivy.tests.common import UnitTestTouch
 
-import ui.date_input as date_input
-from ui.date_input import DateInput
+import ui.inputs.date_input as date_input
+from ui.inputs.date_input import DateInput
 
 
 ## PARSING ##

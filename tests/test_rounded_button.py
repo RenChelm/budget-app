@@ -2,8 +2,8 @@ import pytest
 
 from kivy.graphics import RoundedRectangle
 
-from ui.entry_row import BORDER_RADIUS
-from ui.rounded_button import PRESSED_SHADE, RoundedButton
+from ui.transactions.entry_row import BORDER_RADIUS
+from ui.buttons.rounded_button import PRESSED_SHADE, RoundedButton
 
 MINT = (0.51765, 0.878, 0.737, 1)
 

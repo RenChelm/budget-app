@@ -101,38 +101,42 @@ Key build configuration:
 
 ## Project Structure
 
-- `main.py`: Entry point and core application logic.
+- `main.py`: Entry point and core application logic, plus the function that writes the main page's Spent, Left and Transactions lines.
 - `budget_periods.py`: Self contained functions that handle budget period/week boundaries, weekly max history, and week summaries (no Kivy, so it's easy to test).
+- `transactions.py`: Self contained functions that add, change, delete and rename transactions and sort a week's transactions, each returning a new list instead of changing the old one (no Kivy, so it's easy to test).
+- `storage.py`: Self contained functions that read and write the app's JSON files and turn what was read into what the app works with, plus the `SavedData` methods the app (and the popups through it) use to keep and save each new list. The only place files are read or written.
 - `android_src/org/ren/budgetapp/BackSwipeFilter.java`: Java class (added to the build with `android.add_src`) that keeps Android's edge back swipe from also counting as a tap on whatever it starts on.
-- `ui/add_transaction_popup.py`: Self contained class that handles transactions.
-- `ui/advanced_section.py`: Self contained classes for the Advanced section of the add and edit popups, which slides open to show the optional retailer and brand.
-- `ui/back_screen.py`: Self contained base class for screens with a titled top bar and back button.
-- `ui/back_swipe.py`: Self contained function that turns on `BackSwipeFilter` on Android.
-- `ui/budget_popup.py`: Self contained class that handles the budget period type, weekly max, long week max, and budget start day/weekday settings.
-- `ui/carry_over_button.py`: Self contained class for the Add/Subtract pill button on the history screen that moves a week's or month's leftover or overspend onto the next one.
-- `ui/carry_over_popup.py`: Self contained class for the popup that offers to add what was left (or subtract what was overspent) in the week or month that just ended.
-- `ui/chevron_button.py`: Self contained class for the chevron icon button (back button and week arrows).
-- `ui/choice_row.py`: Self contained class for a row of buttons where exactly one option is selected (budget period type and week start day).
-- `ui/category_edit_popup.py`: Self contained class for adding or editing a category, retailer or brand: its name, the color choices and the colors saved from the color wheel.
-- `ui/category_select_popup.py`: Self contained class that handles category selection, with a search bar to filter the list.
-- `ui/color_utils.py`: Self contained function that handles luminance-based font color for categories to improve text visibility, plus the shared green Save/Add button color.
-- `ui/color_wheel_popup.py`: Self contained classes for the Custom Color popup: a color wheel (hue around it, saturation out from the center), a brightness slider and a preview of the picked color.
-- `ui/custom_popup.py`: Self contained class for the Custom menu on the main page, which opens the category, retailer or brand list.
-- `ui/edge_to_edge.py`: Self contained function that lets the app draw behind Android's status bar, camera and gesture bar (Android 11+), plus the strips that keep the screens clear of them and the safe area that tracks how big those bars are.
-- `ui/edit_transaction_popup.py`: Self contained class that handles transaction editing.
-- `ui/entry_row.py`: Self contained class that handles transaction entry rows (tap to edit).
-- `ui/expanding_popup.py`: Self contained base class for popups that fit their content and grow downward (top edge stays put) when a section opens.
-- `ui/history_screen.py`: Self contained classes that handle the swipeable budget history screen and its period pages. Pages are built as they come into view and kept between visits, so only periods whose numbers changed are rebuilt.
-- `ui/menu_button.py`: Self contained class for the three-bar menu icon button (WIP).
-- `ui/name_select_popup.py`: Self contained class for the searchable retailer and brand lists (pick, add, rename, remove; opened from Custom it only manages the list), plus the functions that keep those lists (names with optional colors) sorted and matched ignoring case, and the search bar shared with the category list.
-- `ui/number_input.py`: Self contained class for numeric text inputs that open the number pad on Android.
-- `ui/page_carousel.py`: Self contained class for swipeable pages, so the main page, history and week screens all share the same swipe settings. A quick flick turns the page even when it's short, and the page finishes sliding at the speed it was flicked.
-- `ui/rounded_button.py`: Self contained class for buttons with rounded corners (rounded as much as the entry rows) that darken while pressed, used for the four buttons at the bottom of the main page.
-- `ui/sort_controls.py`: Self contained classes that handle the transaction sorting menu and sort order toggle.
-- `ui/spending_chart.py`: Self contained classes for the history screen's circle graphs (spending by category, retailer and brand) and their legends.
-- `ui/week_carousel.py`: Self contained classes that handle the swipeable weekly transaction lists of a budget period.
-- `ui/week_row.py`: Self contained class that handles week rows on the history screen.
-- `ui/week_screen.py`: Self contained class for the screen that shows a week opened from history.
+- `ui/common/back_screen.py`: Self contained base class for screens with a titled top bar and back button.
+- `ui/common/color_utils.py`: Self contained function that handles luminance-based font color for categories to improve text visibility, plus the shared green Save/Add button color.
+- `ui/common/expanding_popup.py`: Self contained base class for popups that fit their content and grow downward (top edge stays put) when a section opens.
+- `ui/common/page_carousel.py`: Self contained class for swipeable pages, so the main page, history and week screens all share the same swipe settings. A quick flick turns the page even when it's short, and the page finishes sliding at the speed it was flicked.
+- `ui/buttons/chevron_button.py`: Self contained class for the chevron icon button (back button and week arrows).
+- `ui/buttons/menu_button.py`: Self contained class for the three-bar menu icon button (WIP).
+- `ui/buttons/rounded_button.py`: Self contained class for buttons with rounded corners (rounded as much as the entry rows) that darken while pressed, used for the four buttons at the bottom of the main page.
+- `ui/inputs/choice_row.py`: Self contained class for a row of buttons where exactly one option is selected (budget period type and week start day).
+- `ui/inputs/date_input.py`: Self contained class for the date field that opens Android's date picker (typed on desktop).
+- `ui/inputs/number_input.py`: Self contained class for numeric text inputs that open the number pad on Android.
+- `ui/inputs/text_box.py`: Self contained class for text inputs that reopen Android's keyboard when tapped again after it was hidden.
+- `ui/system/back_swipe.py`: Self contained function that turns on `BackSwipeFilter` on Android.
+- `ui/system/edge_to_edge.py`: Self contained function that lets the app draw behind Android's status bar, camera and gesture bar (Android 11+), plus the strips that keep the screens clear of them and the safe area that tracks how big those bars are.
+- `ui/transactions/add_transaction_popup.py`: Self contained class that handles transactions.
+- `ui/transactions/advanced_section.py`: Self contained classes for the Advanced section of the add and edit popups, which slides open to show the optional retailer and brand.
+- `ui/transactions/edit_transaction_popup.py`: Self contained class that handles transaction editing.
+- `ui/transactions/entry_row.py`: Self contained class that handles transaction entry rows (tap to edit), plus the function that works out what a row shows for one transaction.
+- `ui/transactions/sort_controls.py`: Self contained classes that handle the transaction sorting menu and sort order toggle.
+- `ui/transactions/week_carousel.py`: Self contained classes that handle the swipeable weekly transaction lists of a budget period.
+- `ui/custom/category_edit_popup.py`: Self contained class for adding or editing a category, retailer or brand: its name, the color choices and the colors saved from the color wheel.
+- `ui/custom/category_select_popup.py`: Self contained class that handles category selection, with a search bar to filter the list, plus the functions that add, edit and delete saved categories, each returning a new list.
+- `ui/custom/color_wheel_popup.py`: Self contained classes for the Custom Color popup: a color wheel (hue around it, saturation out from the center), a brightness slider and a preview of the picked color.
+- `ui/custom/custom_popup.py`: Self contained class for the Custom menu on the main page, which opens the category, retailer or brand list.
+- `ui/custom/name_select_popup.py`: Self contained class for the searchable retailer and brand lists (pick, add, rename, remove; opened from Custom it only manages the list), plus the functions that keep those lists (names with optional colors) sorted and matched ignoring case, and the search bar shared with the category list.
+- `ui/budget/budget_popup.py`: Self contained class that handles the budget period type, weekly max, long week max, and budget start day/weekday settings.
+- `ui/budget/carry_over_popup.py`: Self contained class for the popup that offers to add what was left (or subtract what was overspent) in the week or month that just ended.
+- `ui/history/carry_over_button.py`: Self contained class for the Add/Subtract pill button on the history screen that moves a week's or month's leftover or overspend onto the next one.
+- `ui/history/history_screen.py`: Self contained classes that handle the swipeable budget history screen and its period pages. Pages are built as they come into view and kept between visits, so only periods whose numbers changed are rebuilt. Also holds the functions for a period's summary line and its retailer and brand colors.
+- `ui/history/spending_chart.py`: Self contained classes for the history screen's circle graphs (spending by category, retailer and brand) and their legends.
+- `ui/history/week_row.py`: Self contained class that handles week rows on the history screen, plus the function that picks a row's colors.
+- `ui/history/week_screen.py`: Self contained class for the screen that shows a week opened from history.
 - `tests/`: `pytest` test suite covering `main.py` and `ui/`.
 - `buildozer.spec`: Buildozer configuration for Android deployment.
 - `p4a_recipes/cython/`: Local p4a recipe overriding Cython to 3.0.10 for NDK r25b compatibility.

@@ -1,14 +1,13 @@
-import json
-
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
 from kivy.metrics import dp
 
-from ui.category_edit_popup import CategoryEditPopup
-from ui.color_utils import contrast_color
-from ui.name_select_popup import hint_label, search_box
+from transactions import replace_category
+from ui.custom.category_edit_popup import CategoryEditPopup
+from ui.common.color_utils import contrast_color
+from ui.custom.name_select_popup import hint_label, search_box
 
 DEFAULT_CATEGORIES = [
     {"name": "Food",          "color": [1, 0.6, 0.2, 1]},
@@ -17,6 +16,19 @@ DEFAULT_CATEGORIES = [
     {"name": "Home Goods",    "color": [0.3, 0.6, 0.9, 1]},
     {"name": "Other",         "color": [0.6, 0.6, 0.6, 1]},
 ]
+
+## SAVED CATEGORY LIST (NEWEST FIRST; EACH CHANGE RETURNS A NEW LIST) ##
+
+def add_category(categories, category):
+    return [category] + categories
+
+def edit_category(categories, old_name, category):
+    # Takes the old one's place in the list; a name that's no longer in it leaves the list as it was #
+    index = next((i for i, c in enumerate(categories) if c["name"] == old_name), None)
+    return [category if i == index else c for i, c in enumerate(categories)]
+
+def delete_category(categories, name):
+    return [c for c in categories if c["name"] != name]
 
 class CategorySelectPopup(Popup):
     def __init__(self, app, category_btn=None, **kwargs):
@@ -118,34 +130,18 @@ class CategorySelectPopup(Popup):
         CategoryEditPopup(self.app, on_save=self._on_add_save, initial_name=self.search_input.text.strip()).open()
 
     def _on_add_save(self, new_category, _):
-        self.app.saved_categories.insert(0, new_category)
+        self.app.save_categories(add_category(self.app.saved_categories, new_category))
         self.app.select_category(new_category, self.category_btn, self)
-        with open(self.app.categories_file, "w") as f:
-            json.dump(self.app.saved_categories, f, default=str)
 
     def _delete_category(self, cat):
-        self.app.saved_categories = [c for c in self.app.saved_categories if c["name"] != cat["name"]]
-        with open(self.app.categories_file, "w") as f:
-            json.dump(self.app.saved_categories, f, default=str)
+        self.app.save_categories(delete_category(self.app.saved_categories, cat["name"]))
         self._populate_list()
 
     def _open_edit_popup(self, cat):
         CategoryEditPopup(self.app, on_save=self._on_edit_save, existing_category=cat).open()
 
     def _on_edit_save(self, new_category, old_category):
-        idx = next((i for i, c in enumerate(self.app.saved_categories) if c["name"] == old_category["name"]), None)
-        if idx is not None:
-            self.app.saved_categories[idx] = new_category
-
-        for entry in self.app.saved_amounts:
-            if entry.get("category") and entry["category"]["name"] == old_category["name"]:
-                entry["category"] = new_category
-
-        with open(self.app.categories_file, "w") as f:
-            json.dump(self.app.saved_categories, f, default=str)
-
-        with open(self.app.transactions_file, "w") as f:
-            json.dump(self.app.saved_amounts, f, default=str)
-
+        self.app.save_categories(edit_category(self.app.saved_categories, old_category["name"], new_category))
+        self.app.save_transactions(replace_category(self.app.saved_amounts, old_category["name"], new_category))
         self._populate_list()
         self.app.update_display()

@@ -273,7 +273,7 @@ def test_switching_sort_method_resets_to_descending(app):
 
 
 def test_sort_controls_reflect_app_state(app, kivy_window):
-    from ui.sort_controls import SortControls
+    from ui.transactions.sort_controls import SortControls
 
     controls = SortControls(app)
     controls.select_method("amount")
@@ -287,7 +287,7 @@ def test_sort_controls_reflect_app_state(app, kivy_window):
 
 def test_tapping_sort_text_or_triangle_toggles_order(app, kivy_window):
     from kivy.tests.common import UnitTestTouch
-    from ui.sort_controls import SortControls
+    from ui.transactions.sort_controls import SortControls
 
     controls = SortControls(app, size_hint=(None, None), size=(130, 50), pos=(0, 0))
     kivy_window.add_widget(controls)
@@ -322,7 +322,7 @@ def test_title_is_centered_on_any_width(app):
 
 
 def test_top_bar_has_menu_button(app):
-    from ui.menu_button import MenuButton
+    from ui.buttons.menu_button import MenuButton
 
     assert any(isinstance(w, MenuButton) for w in _root_widget(app).walk())
 
@@ -508,7 +508,7 @@ def test_back_from_week_returns_to_its_history_period(app):
 
 def test_every_swipeable_screen_shares_the_same_swipe_settings(app):
     from kivy.metrics import dp
-    from ui.page_carousel import SWIPE_MIN_MOVE, SWIPE_TIMEOUT
+    from ui.common.page_carousel import SWIPE_MIN_MOVE, SWIPE_TIMEOUT
 
     carousels = [app.week_carousel, app.week_screen.carousel, app.history_screen.carousel]
 
@@ -521,7 +521,7 @@ def test_every_swipeable_screen_shares_the_same_swipe_settings(app):
 
 
 def test_a_shorter_swipe_now_turns_the_week(app, monkeypatch):
-    import ui.page_carousel as carousel_module
+    import ui.common.page_carousel as carousel_module
 
     # Records where each swipe would settle instead of animating there #
     targets = []
@@ -630,7 +630,7 @@ def test_add_on_past_week_prefills_its_first_day_and_stays_there(app, opened_add
 
 
 def test_saving_a_transaction_shows_the_week_it_landed_in(app):
-    from ui.add_transaction_popup import AddTransactionPopup
+    from ui.transactions.add_transaction_popup import AddTransactionPopup
 
     first = app.week_carousel.slides[0]
     app.week_carousel.index = 3
@@ -821,3 +821,22 @@ def test_week_screen_is_titled_by_month_in_weekly_mode(app):
     assert app.week_screen.title_label.text == "November 2026"
     assert len(app.week_screen.carousel.slides) == 5
     assert app.week_screen.carousel.index == 4
+
+
+## INFO PANEL TEXT (PURE) ##
+
+def _summary(spent=0.0, left=None, carried_in=0, count=0):
+    return {"spent": spent, "left": left, "carried_in": carried_in, "count": count}
+
+
+@pytest.mark.parametrize("week, expected", [
+    (_summary(), ("Spent: $0.00", "No weekly max set", "Transactions: 0")),
+    (_summary(12.5, 87.5, count=2), ("Spent: $12.50", "Left: $87.50", "Transactions: 2")),
+    (_summary(112.0, -12.0, count=3), ("Spent: $112.00", "Over by: $12.00", "Transactions: 3")),
+    (_summary(10.0, 130.0, carried_in=40.0, count=1), ("Spent: $10.00", "Left: $130.00\n($40.00 added)", "Transactions: 1")),
+    (_summary(10.0, 60.0, carried_in=-30.0, count=1), ("Spent: $10.00", "Left: $60.00\n($30.00 subtracted)", "Transactions: 1")),
+])
+def test_info_panel_text(week, expected):
+    from main import info_panel_text
+
+    assert info_panel_text(week) == expected

@@ -3,15 +3,17 @@ from datetime import datetime, timedelta
 import pytest
 
 from budget_periods import summarize_week
-from ui.budget_popup import BudgetPopup
-from ui.entry_row import BORDER_WIDTH
-from ui.history_screen import HistoryScreen, PeriodPage
-from ui.spending_chart import SERIES_COLORS
-from ui.week_row import (
+from ui.budget.budget_popup import BudgetPopup
+from ui.transactions.entry_row import BORDER_WIDTH
+from ui.history.history_screen import HistoryScreen, PeriodPage, summary_text, with_name_colors
+from ui.history.spending_chart import SERIES_COLORS
+from ui.history.week_row import (
     CURRENT_BORDER_WIDTH,
     OVER_BORDER_WIDTH,
     UNCATEGORIZED_COLOR,
+    UPCOMING_TEXT_COLOR,
     WeekRow,
+    row_colors,
 )
 
 FOOD = {"name": "Food", "color": [1, 0.6, 0.2, 1]}
@@ -142,14 +144,14 @@ def test_week_row_offers_to_move_its_amount_onto_next_week(kivy_window, over, ca
 
 
 def test_carry_over_button_names_the_amount_for_months(kivy_window):
-    from ui.carry_over_button import carry_over_text
+    from ui.history.carry_over_button import carry_over_text
 
     assert carry_over_text({"amount": 95.0, "over": False, "carried": False}, "month") == "Add $95.00 to next month"
     assert carry_over_text({"amount": -120.0, "over": True, "carried": True}, "month") == "Subtracted $120.00 from next month"
 
 
 def test_carry_over_button_is_filled_only_once_its_on(kivy_window):
-    from ui.carry_over_button import CarryOverButton
+    from ui.history.carry_over_button import CarryOverButton
 
     off = CarryOverButton({"amount": 30.0, "over": False, "carried": False}, "week", outline_color=(1, 1, 1, 1))
     on = CarryOverButton({"amount": 30.0, "over": False, "carried": True}, "week", outline_color=(1, 1, 1, 1))
@@ -160,7 +162,7 @@ def test_carry_over_button_is_filled_only_once_its_on(kivy_window):
 
 
 def test_week_row_shortens_the_bar_beside_the_button(kivy_window):
-    from ui.week_row import PILL_WIDTH
+    from ui.history.week_row import PILL_WIDTH
 
     plain = WeekRow(make_week([make_entry(70.0, WEEK_START)]), 1, size_hint=(None, None), size=(336, 96))
     with_button = WeekRow(_finished_week(False), 1, on_carry_over=lambda *args: None,
@@ -649,7 +651,7 @@ def test_budget_popup_switches_to_weekly_and_saves_the_weekday(kivy_window):
 
 
 def test_choice_row_highlights_only_the_selected_option(kivy_window):
-    from ui.choice_row import SELECTED_COLOR, UNSELECTED_COLOR
+    from ui.inputs.choice_row import SELECTED_COLOR, UNSELECTED_COLOR
 
     popup = BudgetPopup(FakeApp())
     popup.weekday_choice.buttons[3].dispatch("on_release")
@@ -677,7 +679,7 @@ def popup_now(monkeypatch):
         def now(cls, tz=None):
             return datetime(2026, 10, 22, 9, 0)
 
-    monkeypatch.setattr("ui.budget_popup.datetime", FixedDatetime)
+    monkeypatch.setattr("ui.budget.budget_popup.datetime", FixedDatetime)
 
 
 def test_budget_popup_previews_the_long_week(kivy_window, popup_now):
@@ -831,8 +833,8 @@ def _carry_span(amount=23.5):
 
 
 def test_carry_over_popup_notes_last_week(kivy_window):
-    from ui.carry_over_popup import CarryOverPopup
-    from ui.color_utils import CONFIRM_COLOR
+    from ui.budget.carry_over_popup import CarryOverPopup
+    from ui.common.color_utils import CONFIRM_COLOR
 
     popup = CarryOverPopup(FakeApp(), _carry_span(), {"start": WEEK_END}, mode="weekly")
 
@@ -846,7 +848,7 @@ def test_carry_over_popup_notes_last_week(kivy_window):
 
 
 def test_carry_over_popup_offers_to_subtract_an_overspend(kivy_window):
-    from ui.carry_over_popup import CarryOverPopup
+    from ui.budget.carry_over_popup import CarryOverPopup
 
     popup = CarryOverPopup(FakeApp(), _carry_span(-30.0), {"start": WEEK_END}, mode="weekly")
 
@@ -858,7 +860,7 @@ def test_carry_over_popup_offers_to_subtract_an_overspend(kivy_window):
 
 
 def test_carry_over_popup_shows_a_negative_budget_with_the_minus_first(kivy_window):
-    from ui.carry_over_popup import CarryOverPopup
+    from ui.budget.carry_over_popup import CarryOverPopup
 
     span = dict(_carry_span(-30.0), spent=0.0, budget=-30.0)
     popup = CarryOverPopup(FakeApp(), span, {"start": WEEK_END}, mode="weekly")
@@ -871,7 +873,7 @@ def test_carry_over_popup_shows_a_negative_budget_with_the_minus_first(kivy_wind
     (-80.0, "Subtract the $80.00 you went over from this month? Each of its 4 weeks gets $20.00 less."),
 ])
 def test_carry_over_popup_explains_the_monthly_split(kivy_window, amount, ending):
-    from ui.carry_over_popup import CarryOverPopup
+    from ui.budget.carry_over_popup import CarryOverPopup
 
     popup = CarryOverPopup(FakeApp(), _carry_span(amount), {"weeks": [{}] * 4}, mode="monthly")
 
@@ -880,7 +882,7 @@ def test_carry_over_popup_explains_the_monthly_split(kivy_window, amount, ending
 
 @pytest.mark.parametrize("button, carried", [("add_btn", True), ("no_btn", False)])
 def test_carry_over_popup_records_the_answer(kivy_window, button, carried):
-    from ui.carry_over_popup import CarryOverPopup
+    from ui.budget.carry_over_popup import CarryOverPopup
 
     app = FakeApp()
     popup = CarryOverPopup(app, _carry_span(), {"start": WEEK_END}, mode="weekly")
@@ -888,3 +890,41 @@ def test_carry_over_popup_records_the_answer(kivy_window, button, carried):
     getattr(popup, button).dispatch("on_release")
 
     assert app.carry_over_choices == [(WEEK_START, WEEK_END, False, carried)]
+
+
+## PERIOD TEXT, NAME COLORS AND ROW COLORS (PURE) ##
+
+@pytest.mark.parametrize("weeks, weekly_max, text", [
+    ([make_week([], weekly_max=None)], None, "Tap Budget to set a weekly max"),
+    ([make_week([make_entry(40.0, WEEK_START)], now=datetime(2026, 10, 18))], 100.0, "This week: $15.00/day · 4 days left"),
+    ([make_week([make_entry(130.0, WEEK_START)], now=datetime(2026, 10, 18))], 100.0, "This week: $30.00 over"),
+    ([make_week([make_entry(40.0, WEEK_START)])], 100.0, "Under budget every week"),
+    ([make_week([make_entry(40.0, WEEK_START)]), make_week([make_entry(130.0, WEEK_START)])], 100.0, "Over budget in 1 of 2 weeks"),
+])
+def test_summary_text(weeks, weekly_max, text):
+    assert summary_text(weeks, weekly_max) == text
+
+
+def test_with_name_colors_colors_each_total_without_changing_the_period():
+    red = [0.9, 0.3, 0.3, 1]
+    period = {"start": WEEK_START, "retailers": [{"name": "Walmart", "amount": 5.0}], "brands": [{"name": "Lay's", "amount": 2.0}]}
+
+    colored = with_name_colors(period, {"retailer": [{"name": "walmart", "color": red}]})
+
+    assert colored["retailers"] == [{"name": "Walmart", "amount": 5.0, "color": red}]
+    assert colored["brands"] == [{"name": "Lay's", "amount": 2.0, "color": None}]
+    assert colored["start"] == WEEK_START
+    assert "color" not in period["retailers"][0]
+
+
+def test_row_colors_over_budget_keeps_the_category_fill_with_a_heavy_border():
+    fill, text_color, border_color, border_width = row_colors(make_week([make_entry(130.0, WEEK_START, FOOD)]))
+
+    assert fill == FOOD["color"]
+    assert (border_color, border_width) == ((0, 0, 0, 1), OVER_BORDER_WIDTH)
+
+
+def test_row_colors_upcoming_week_is_see_through_and_dimmed():
+    fill, text_color, border_color, border_width = row_colors(make_week([], now=datetime(2026, 10, 1)))
+
+    assert (fill, text_color, border_width) == ((0, 0, 0, 0), UPCOMING_TEXT_COLOR, BORDER_WIDTH)

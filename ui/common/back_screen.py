@@ -6,7 +6,7 @@ from kivy.uix.widget import Widget
 from kivy.graphics import Color, Rectangle
 from kivy.metrics import dp, sp
 
-from ui.chevron_button import ChevronButton
+from ui.buttons.chevron_button import ChevronButton
 
 ## SCREEN WITH A TITLED TOP BAR AND BACK BUTTON ##
 

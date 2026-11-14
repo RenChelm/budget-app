@@ -3,11 +3,12 @@ from datetime import date, datetime, timedelta
 
 import pytest
 
-from ui.add_transaction_popup import AddTransactionPopup
-from ui.edit_transaction_popup import EditTransactionPopup
+from ui.transactions.add_transaction_popup import AddTransactionPopup
+from ui.transactions.edit_transaction_popup import EditTransactionPopup
+from storage import SavedData
 
 
-class FakeApp:
+class FakeApp(SavedData):
     def __init__(self, tmp_path):
         self.saved_amounts = []
         self.transactions_file = str(tmp_path / "transactions.json")
@@ -267,7 +268,7 @@ def test_edit_popup_delete_button_deletes_entry(tmp_path, kivy_window):
 
 def test_edit_popup_has_delete_on_the_left_and_a_green_save_on_the_right(tmp_path, kivy_window):
     from kivy.uix.button import Button
-    from ui.color_utils import CONFIRM_COLOR
+    from ui.common.color_utils import CONFIRM_COLOR
 
     fake_app = FakeApp(tmp_path)
     fake_app.saved_amounts = [

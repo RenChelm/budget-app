@@ -1,4 +1,3 @@
-import copy
 from datetime import datetime
 
 from kivy.clock import Clock
@@ -9,12 +8,39 @@ from kivy.uix.scrollview import ScrollView
 from kivy.metrics import dp, sp
 
 from budget_periods import format_money, format_period, history_periods
-from ui.back_screen import BackScreen
-from ui.carry_over_button import CarryOverButton
-from ui.page_carousel import PageCarousel
-from ui.name_select_popup import name_color
-from ui.spending_chart import CategoryChart, NameChart
-from ui.week_row import WeekRow
+from ui.common.back_screen import BackScreen
+from ui.history.carry_over_button import CarryOverButton
+from ui.common.page_carousel import PageCarousel
+from ui.custom.name_select_popup import name_color
+from ui.history.spending_chart import CategoryChart, NameChart
+from ui.history.week_row import WeekRow
+
+## PERIOD TEXT AND COLORS ##
+
+def summary_text(weeks, weekly_max):
+    # The header's last line: this week's daily allowance, or how the finished weeks went #
+    if weekly_max is None:
+        return "Tap Budget to set a weekly max"
+
+    current = next((week for week in weeks if week["status"] == "current"), None)
+    if current is not None:
+        if current["left"] < 0:
+            return f"This week: ${-current['left']:.2f} over"
+        per_day = current["left"] / current["days_left"]
+        days = f"{current['days_left']} day" + ("" if current["days_left"] == 1 else "s")
+        return f"This week: ${per_day:.2f}/day · {days} left"
+
+    weeks_over = sum(1 for week in weeks if week["left"] < 0)
+    if weeks_over == 0:
+        return "Under budget every week"
+    return f"Over budget in {weeks_over} of {len(weeks)} weeks"
+
+def with_name_colors(period, saved_names):
+    # A copy of the period with each retailer and brand total in the color picked for it (None if it has none) #
+    # Retailers and brands keep their colors in their lists, not on transactions; adding them here also #
+    # makes a color change count as a change to the page, so its graphs get redrawn #
+    colored = lambda kind, totals: [{**total, "color": name_color(saved_names.get(kind, []), total["name"])} for total in totals]
+    return {**period, "retailers": colored("retailer", period["retailers"]), "brands": colored("brand", period["brands"])}
 
 ## ONE BUDGET PERIOD (HEADER + 4-5 WEEK ROWS + CHARTS + NEIGHBOR HINTS) ##
 
@@ -29,9 +55,9 @@ class PeriodPage(BoxLayout):
     @staticmethod
     def key_for(period, previous_period, next_period, mode):
         # Everything the page shows; an equal key means a cached page is still right #
-        # Copied, so later edits to the data can't quietly change a cached page's key #
+        # Saved data is never changed in place (each change makes a new list), so the key needs no copy of the period #
         bounds = lambda neighbor: (neighbor["start"], neighbor["end"]) if neighbor else None
-        return copy.deepcopy((mode, period, bounds(previous_period), bounds(next_period)))
+        return (mode, period, bounds(previous_period), bounds(next_period))
 
     def build(self):
         # Pages are built when they're first about to be seen, since building every period's charts is slow #
@@ -63,7 +89,7 @@ class PeriodPage(BoxLayout):
         else:
             self.total_label = self._make_header_label(f"${spent:.2f} of {format_money(period['budget'])} · ${weekly_max:.2f}/week", sp(14))
 
-        self.summary_label = self._make_header_label(self._summary_text(weeks, weekly_max), sp(14))
+        self.summary_label = self._make_header_label(summary_text(weeks, weekly_max), sp(14))
 
         header.add_widget(self.title_label)
         header.add_widget(self.total_label)
@@ -125,23 +151,6 @@ class PeriodPage(BoxLayout):
         hints.add_widget(self.newer_label)
         self.add_widget(hints)
 
-    def _summary_text(self, weeks, weekly_max):
-        if weekly_max is None:
-            return "Tap Budget to set a weekly max"
-
-        current = next((week for week in weeks if week["status"] == "current"), None)
-        if current is not None:
-            if current["left"] < 0:
-                return f"This week: ${-current['left']:.2f} over"
-            per_day = current["left"] / current["days_left"]
-            days = f"{current['days_left']} day" + ("" if current["days_left"] == 1 else "s")
-            return f"This week: ${per_day:.2f}/day · {days} left"
-
-        weeks_over = sum(1 for week in weeks if week["left"] < 0)
-        if weeks_over == 0:
-            return "Under budget every week"
-        return f"Over budget in {weeks_over} of {len(weeks)} weeks"
-
     def _make_header_label(self, text, font_size, bold=False):
         label = Label(text=text, font_size=font_size, bold=bold, halign="center", valign="middle", color=(1, 1, 1, 1))
         label.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
@@ -170,15 +179,11 @@ class HistoryScreen(BackScreen):
     def refresh(self, now=None, open_start=None):
         settings = self.app.budget_settings
         mode = settings["mode"]
-        periods = history_periods(self.app.saved_amounts, settings, now or datetime.now())
-
-        # Retailers and brands keep their colors in their lists, not on transactions; adding them here also #
-        # makes a color change count as a change to the page, so its graphs get redrawn #
         saved_names = getattr(self.app, "saved_names", {})
-        for period in periods:
-            for kind, key in (("retailer", "retailers"), ("brand", "brands")):
-                for total in period[key]:
-                    total["color"] = name_color(saved_names.get(kind, []), total["name"])
+        periods = [
+            with_name_colors(period, saved_names)
+            for period in history_periods(self.app.saved_amounts, settings, now or datetime.now())
+        ]
 
         # Pages are kept between visits; only a period whose numbers changed (or whose neighbors did) gets a new page #
         cached = {page.period["start"]: page for page in self.carousel.slides}

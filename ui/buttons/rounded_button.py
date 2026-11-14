@@ -2,7 +2,7 @@ from kivy.graphics import Color, RoundedRectangle
 from kivy.properties import ColorProperty, StringProperty
 from kivy.uix.button import Button
 
-from ui.entry_row import BORDER_RADIUS
+from ui.transactions.entry_row import BORDER_RADIUS
 
 PRESSED_SHADE = 0.8     # How much darker it gets while held down #
 

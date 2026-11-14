@@ -1,5 +1,3 @@
-import json
-
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
@@ -7,9 +5,10 @@ from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
 from kivy.metrics import dp
 
-from ui.category_edit_popup import CategoryEditPopup
-from ui.color_utils import contrast_color
-from ui.text_box import TextBox
+from transactions import rename_in_transactions
+from ui.custom.category_edit_popup import CategoryEditPopup
+from ui.common.color_utils import contrast_color
+from ui.inputs.text_box import TextBox
 
 # Optional transaction details picked from a saved list; there are no defaults, the user adds every one #
 NAME_KINDS = {"retailer": "Retailer/Platform", "brand": "Brand/Creator"}
@@ -181,8 +180,7 @@ class NameSelectPopup(Popup):
 
     def _add(self, name, color=None):
         names, name = add_entry(self.names, name, color)
-        self.app.saved_names[self.kind] = names
-        self._save_names()
+        self.app.save_names(self.kind, names)
         if self.picking:
             self._select(name)
         else:
@@ -192,8 +190,7 @@ class NameSelectPopup(Popup):
 
     def _delete(self, name):
         # Only removes it from the list; transactions that used it keep it #
-        self.app.saved_names[self.kind] = [entry for entry in self.names if entry["name"] != name]
-        self._save_names()
+        self.app.save_names(self.kind, [entry for entry in self.names if entry["name"] != name])
         self._populate_list()
 
     def _open_edit_popup(self, name):
@@ -207,24 +204,13 @@ class NameSelectPopup(Popup):
 
     def _on_edit_save(self, old_name, new_name, color=None):
         names, new_name = edit_entry(self.names, old_name, new_name, color)
-        self.app.saved_names[self.kind] = names
-
-        for entry in self.app.saved_amounts:
-            if entry.get(self.kind) == old_name:
-                entry[self.kind] = new_name
-
-        self._save_names()
-        with open(self.app.transactions_file, "w") as f:
-            json.dump(self.app.saved_amounts, f, default=str)
+        self.app.save_names(self.kind, names)
+        self.app.save_transactions(rename_in_transactions(self.app.saved_amounts, self.kind, old_name, new_name))
 
         if self.on_rename is not None:
             self.on_rename(old_name, new_name)
         self._populate_list()
         self.app.update_display()
-
-    def _save_names(self):
-        with open(self.app.names_files[self.kind], "w") as f:
-            json.dump(self.names, f)
 
 def search_box(hint_text):
     # Only filters the list; new entries are added with the New button #

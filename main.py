@@ -1,6 +1,3 @@
-import json
-import os
-
 from kivy.config import Config
 Config.set('graphics', 'width', '360')
 Config.set('graphics', 'height', '800')
@@ -20,114 +17,55 @@ from kivy.metrics import dp, sp
 
 from datetime import datetime
 
-from ui.add_transaction_popup import AddTransactionPopup
-from ui.edit_transaction_popup import EditTransactionPopup
-from ui.custom_popup import CustomPopup
-from ui.name_select_popup import NAME_KINDS
-from ui.sort_controls import SortControls
-from ui.menu_button import MenuButton
-from ui.history_screen import HistoryScreen
-from ui.week_carousel import WeekCarousel
-from ui.week_screen import WeekScreen
-from ui.budget_popup import BudgetPopup
-from ui.carry_over_popup import CarryOverPopup
-from ui.back_swipe import filter_back_swipes
-from ui.edge_to_edge import SafeAreaStrip, draw_edge_to_edge
-from ui.rounded_button import RoundedButton
-from ui.color_utils import contrast_color
+from ui.transactions.add_transaction_popup import AddTransactionPopup
+from ui.transactions.edit_transaction_popup import EditTransactionPopup
+from ui.custom.custom_popup import CustomPopup
+from ui.custom.name_select_popup import NAME_KINDS
+from ui.transactions.sort_controls import SortControls
+from ui.buttons.menu_button import MenuButton
+from ui.history.history_screen import HistoryScreen
+from ui.transactions.week_carousel import WeekCarousel
+from ui.history.week_screen import WeekScreen
+from ui.budget.budget_popup import BudgetPopup
+from ui.budget.carry_over_popup import CarryOverPopup
+from ui.system.back_swipe import filter_back_swipes
+from ui.system.edge_to_edge import SafeAreaStrip, draw_edge_to_edge
+from ui.buttons.rounded_button import RoundedButton
+from ui.common.color_utils import contrast_color
 
 from budget_periods import pending_carry_over, period_bounds, set_carry_over, set_weekly_max, week_summary
+from storage import SavedData
+from transactions import delete_transaction
 
-class BudgetApp(App):
+## INFO PANEL TEXT (SPENT, LEFT OR OVER, AND HOW MANY TRANSACTIONS, FOR ONE WEEK'S SUMMARY) ##
+
+def info_panel_text(week):
+    if week["left"] is None:
+        left = "No weekly max set"
+    elif week["left"] < 0:
+        left = f"Over by: ${-week['left']:.2f}"
+    else:
+        left = f"Left: ${week['left']:.2f}"
+
+    if week["carried_in"] > 0:
+        left += f"\n(${week['carried_in']:.2f} added)"
+    elif week["carried_in"] < 0:
+        left += f"\n(${-week['carried_in']:.2f} subtracted)"
+
+    return f"Spent: ${week['spent']:.2f}", left, f"Transactions: {week['count']}"
+
+class BudgetApp(SavedData, App):
     def build(self):
 
         # Android moves the app up so the text box being typed in stays above the keyboard #
         Window.softinput_mode = "below_target"
 
-        self.saved_amounts = []
-        self.saved_categories = []
         self.sort_by = "date"
         self.sort_descending = True
         self.carry_over_popup = None
-        self.transactions_file = os.path.join(self.user_data_dir, "transactions.json")
-        self.categories_file = os.path.join(self.user_data_dir, "categories.json")
-        self.budget_file = os.path.join(self.user_data_dir, "budget.json")
-        self.colors_file = os.path.join(self.user_data_dir, "colors.json")
 
-        # Load saved entries from file #
-        try:
-            with open(self.transactions_file, "r") as f:
-                content = f.read().strip()
-                if content:
-                    self.saved_amounts = json.loads(content)
-
-                    # Convert timestamp strings back to datetime objects #
-                    for entry in self.saved_amounts:
-                        if isinstance(entry.get("timestamp"), str):
-                            entry["timestamp"] = datetime.fromisoformat(entry["timestamp"])
-                else:
-                    self.saved_amounts = []
-        except (FileNotFoundError, json.JSONDecodeError):
-            self.saved_amounts = []
-
-        try:
-            with open(self.categories_file, "r") as f:
-                content = f.read().strip()
-                if content:
-                    self.saved_categories = json.loads(content)
-
-                else:
-                    self.saved_categories = []
-        except (FileNotFoundError, json.JSONDecodeError):
-            self.saved_categories = []
-
-        # Category colors picked from the color wheel, newest first #
-        try:
-            with open(self.colors_file, "r") as f:
-                content = f.read().strip()
-                self.saved_colors = json.loads(content) if content else []
-        except (FileNotFoundError, json.JSONDecodeError):
-            self.saved_colors = []
-
-        # Retailers and brands the user has added for the Advanced section (retailers.json, brands.json) #
-        self.saved_names = {}
-        self.names_files = {kind: os.path.join(self.user_data_dir, f"{kind}s.json") for kind in NAME_KINDS}
-        for kind, path in self.names_files.items():
-            try:
-                with open(path, "r") as f:
-                    content = f.read().strip()
-                    entries = json.loads(content) if content else []
-                    self.saved_names[kind] = [entry if isinstance(entry, dict) else {"name": entry, "color": None} for entry in entries]
-            except (FileNotFoundError, json.JSONDecodeError):
-                self.saved_names[kind] = []
-
-        # Defaults to calendar months with no weekly max until the user sets one #
-        # Weekly mode instead keeps every week 7 days, starting on `start_weekday` (0 = Monday) #
-        # `carry_overs` records each answer to moving a week's/period's leftover or overspend onto the next one #
-        self.budget_settings = {
-            "mode": "monthly",
-            "start_day": 1,
-            "start_weekday": 0,
-            "weekly_max_history": [],
-            "long_week_max_history": [],
-            "carry_overs": []
-        }
-        try:
-            with open(self.budget_file, "r") as f:
-                content = f.read().strip()
-                if content:
-                    self.budget_settings.update(json.loads(content))
-
-                    for change in self.budget_settings["weekly_max_history"] + self.budget_settings["long_week_max_history"]:
-                        if isinstance(change.get("from"), str):
-                            change["from"] = datetime.fromisoformat(change["from"])
-
-                    for choice in self.budget_settings["carry_overs"]:
-                        for key in ("start", "end"):
-                            if isinstance(choice.get(key), str):
-                                choice[key] = datetime.fromisoformat(choice[key])
-        except (FileNotFoundError, json.JSONDecodeError):
-            pass
+        # Transactions, categories, saved colors, retailers, brands and budget settings #
+        self.load_saved_data(self.user_data_dir, NAME_KINDS)
 
         root = BoxLayout(orientation="vertical")
 
@@ -423,19 +361,16 @@ class BudgetApp(App):
 
     def update_budget(self, changes, weekly_max, long_week_max=None, now=None):
         # `changes` holds any of mode, start_day and start_weekday #
-        self.budget_settings.update(changes)
+        settings = {**self.budget_settings, **changes}
 
         # A new max applies from the current period on, leaving past periods' max as it was #
-        current_start = period_bounds(now or datetime.now(), self.budget_settings)[0]
-        for key, amount in (("weekly_max_history", weekly_max), ("long_week_max_history", long_week_max)):
-            self.budget_settings[key] = set_weekly_max(self.budget_settings[key], current_start, amount)
-
-        self.save_budget_settings()
+        current_start = period_bounds(now or datetime.now(), settings)[0]
+        self.save_budget_settings({
+            **settings,
+            "weekly_max_history": set_weekly_max(settings["weekly_max_history"], current_start, weekly_max),
+            "long_week_max_history": set_weekly_max(settings["long_week_max_history"], current_start, long_week_max)
+        })
         self.update_display()
-
-    def save_budget_settings(self):
-        with open(self.budget_file, "w") as f:
-            json.dump(self.budget_settings, f, default=str)
 
     ## CARRY-OVER - METHODS ##
 
@@ -454,15 +389,18 @@ class BudgetApp(App):
 
     def set_carry_over(self, span, carried):
         # `span` is the finished week/period, with its leftover or overspend in `carry_over` #
-        self.budget_settings["carry_overs"] = set_carry_over(
-            self.budget_settings["carry_overs"],
-            self.budget_settings["mode"],
-            span["start"],
-            span["end"],
-            span["carry_over"]["over"],
-            carried
-        )
-        self.save_budget_settings()
+        settings = self.budget_settings
+        self.save_budget_settings({
+            **settings,
+            "carry_overs": set_carry_over(
+                settings["carry_overs"],
+                settings["mode"],
+                span["start"],
+                span["end"],
+                span["carry_over"]["over"],
+                carried
+            )
+        })
         self.update_display()
 
         # Later weeks' budgets build on this one, so History is redrawn on the page it was showing #
@@ -492,11 +430,7 @@ class BudgetApp(App):
 
     def delete_entry(self, index):
         if 0 <= index < len(self.saved_amounts):
-            del self.saved_amounts[index]
-
-            with open(self.transactions_file, "w") as f:
-                json.dump(self.saved_amounts, f, default=str)
-            
+            self.save_transactions(delete_transaction(self.saved_amounts, index))
             self.update_display()
 
     ## EDIT ENTRY WINDOW - METHOD ##
@@ -515,12 +449,7 @@ class BudgetApp(App):
         popup.open()
 
     ## SORTING - METHODS ##
-
-    def sort_key(self, pair):
-        entry = pair[1]
-        if self.sort_by == "amount":
-            return (entry["amount"], entry["timestamp"])
-        return entry["timestamp"]
+    # The week pages sort with these settings (see sorted_transactions in transactions.py) #
 
     def set_sort_method(self, method):
         self.sort_by = method
@@ -530,34 +459,6 @@ class BudgetApp(App):
     def toggle_sort_order(self):
         self.sort_descending = not self.sort_descending
         self.update_display()
-
-    ## TRANSACTION ROWS - METHOD ##
-
-    def transaction_rows(self, start, end):
-        indexed_entries = sorted(
-            ((i, entry) for i, entry in enumerate(self.saved_amounts) if start <= entry["timestamp"] < end),
-            key=self.sort_key,
-            reverse=self.sort_descending
-        )
-
-        rows = []
-        for original_index, sorted_entry in indexed_entries:
-            t = sorted_entry["timestamp"].strftime("%b %d, %I:%M %p")
-            category = sorted_entry["category"]["name"] if sorted_entry["category"] else "Uncategorized"
-            amount = f"${sorted_entry['amount']:.2f}"
-            color = sorted_entry["category"]["color"] if sorted_entry["category"] else [0.30, 0.45, 0.32, 1]
-            note = sorted_entry.get("note") or ""
-
-            rows.append({
-                "timestamp_text": t,
-                "category_text": category,
-                "amount_text": amount,
-                "note_text": note,
-                "index": original_index,
-                "category_color": color
-            })
-
-        return rows
 
     ## UPDATE DISPLAY - METHODS ##
 
@@ -585,20 +486,7 @@ class BudgetApp(App):
         if week is None:
             return
 
-        self.spent_label.text = f"Spent: ${week['spent']:.2f}"
-        self.trans_label.text = f"Transactions: {week['count']}"
-
-        if week["left"] is None:
-            self.left_label.text = "No weekly max set"
-        elif week["left"] < 0:
-            self.left_label.text = f"Over by: ${-week['left']:.2f}"
-        else:
-            self.left_label.text = f"Left: ${week['left']:.2f}"
-
-        if week["carried_in"] > 0:
-            self.left_label.text += f"\n(${week['carried_in']:.2f} added)"
-        elif week["carried_in"] < 0:
-            self.left_label.text += f"\n(${-week['carried_in']:.2f} subtracted)"
+        self.spent_label.text, self.left_label.text, self.trans_label.text = info_panel_text(week)
 
 if __name__ == "__main__":
     BudgetApp().run()

@@ -5,7 +5,7 @@ from kivy.uix.popup import Popup
 from kivy.metrics import dp
 
 from budget_periods import format_money
-from ui.color_utils import CONFIRM_COLOR
+from ui.common.color_utils import CONFIRM_COLOR
 
 ## ASKS WHETHER TO MOVE WHAT WAS LEFT (OR OVERSPENT) IN THE LAST WEEK/MONTH ONTO THE CURRENT ONE ##
 

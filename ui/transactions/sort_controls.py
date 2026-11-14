@@ -10,7 +10,7 @@ from kivy.graphics import Color, Line, Triangle
 from kivy.properties import BooleanProperty
 from kivy.metrics import dp, sp
 
-from ui.entry_row import BORDER_WIDTH
+from ui.transactions.entry_row import BORDER_WIDTH
 
 SORT_LABELS = {"date": "Date", "amount": "Amount"}
 SORT_OPTION_LABELS = {"date": "By Date", "amount": "By Amount"}

@@ -6,9 +6,9 @@ from kivy.clock import Clock
 from kivy.uix.modalview import ModalView
 
 import main
-import ui.custom_popup as custom_popup
-from ui.custom_popup import CustomPopup
-from ui.rounded_button import RoundedButton
+import ui.custom.custom_popup as custom_popup
+from ui.custom.custom_popup import CustomPopup
+from ui.buttons.rounded_button import RoundedButton
 
 
 class FakeApp:

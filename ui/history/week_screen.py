@@ -1,6 +1,6 @@
 from budget_periods import format_period
-from ui.back_screen import BackScreen
-from ui.week_carousel import WeekCarousel
+from ui.common.back_screen import BackScreen
+from ui.transactions.week_carousel import WeekCarousel
 
 ## WEEK SCREEN (OPENED BY TAPPING A WEEK IN HISTORY) ##
 

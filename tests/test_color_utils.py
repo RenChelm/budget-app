@@ -1,6 +1,6 @@
 import pytest
 
-from ui.color_utils import contrast_color
+from ui.common.color_utils import contrast_color
 
 
 @pytest.mark.parametrize("bg, expected", [

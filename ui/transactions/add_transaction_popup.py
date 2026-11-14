@@ -1,17 +1,16 @@
-import json
-
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.metrics import dp
 
 from datetime import datetime
 
-from ui.advanced_section import AdvancedSection
-from ui.category_select_popup import CategorySelectPopup
-from ui.date_input import DateInput
-from ui.expanding_popup import ExpandingPopup
-from ui.number_input import NumberInput
-from ui.text_box import TextBox
+from transactions import add_transaction
+from ui.transactions.advanced_section import AdvancedSection
+from ui.custom.category_select_popup import CategorySelectPopup
+from ui.inputs.date_input import DateInput
+from ui.common.expanding_popup import ExpandingPopup
+from ui.inputs.number_input import NumberInput
+from ui.inputs.text_box import TextBox
 
 class AddTransactionPopup(ExpandingPopup):
     def __init__(self, app, day=None, **kwargs):
@@ -98,11 +97,7 @@ class AddTransactionPopup(ExpandingPopup):
             "brand": self.advanced.choices["brand"]
         }
 
-        self.app.saved_amounts.append(entry)
-
-        with open(self.app.transactions_file, "w") as f:
-            json.dump(self.app.saved_amounts, f, default=str)
-
+        self.app.save_transactions(add_transaction(self.app.saved_amounts, entry))
         self.app.update_display()
         self.app.show_week_of(timestamp)
         self.dismiss()

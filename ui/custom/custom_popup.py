@@ -1,10 +1,10 @@
 from kivy.uix.boxlayout import BoxLayout
 from kivy.metrics import dp
 
-from ui.category_select_popup import CategorySelectPopup
-from ui.expanding_popup import ExpandingPopup
-from ui.name_select_popup import NAME_KIND_PLURALS, NameSelectPopup
-from ui.rounded_button import RoundedButton
+from ui.custom.category_select_popup import CategorySelectPopup
+from ui.common.expanding_popup import ExpandingPopup
+from ui.custom.name_select_popup import NAME_KIND_PLURALS, NameSelectPopup
+from ui.buttons.rounded_button import RoundedButton
 
 ## PICKS WHICH OF THE USER'S OWN LISTS TO OPEN: CATEGORIES, RETAILERS OR BRANDS ##
 

@@ -8,11 +8,12 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.modalview import ModalView
 
-from ui.category_edit_popup import CategoryEditPopup, PALETTE
-from ui.name_select_popup import (
+from ui.custom.category_edit_popup import CategoryEditPopup, PALETTE
+from ui.custom.name_select_popup import (
     NameSelectPopup, add_entry, edit_entry, find_entry, matching_entries, name_color,
 )
-from ui.text_box import TextBox
+from ui.inputs.text_box import TextBox
+from storage import SavedData
 
 RED, BLUE = list(PALETTE[0]), list(PALETTE[5])
 
@@ -26,7 +27,7 @@ def entries(*names):
     return [entry(*n) if isinstance(n, tuple) else entry(n) for n in names]
 
 
-class FakeApp:
+class FakeApp(SavedData):
     def __init__(self, tmp_path, retailers=(), brands=()):
         self.saved_names = {"retailer": entries(*retailers), "brand": entries(*brands)}
         self.names_files = {"retailer": str(tmp_path / "retailers.json"), "brand": str(tmp_path / "brands.json")}

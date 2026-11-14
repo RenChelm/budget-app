@@ -6,11 +6,26 @@ from kivy.graphics import Color, RoundedRectangle, Line
 from kivy.properties import StringProperty, NumericProperty, ListProperty
 from kivy.metrics import dp
 
-from ui.color_utils import contrast_color
+from ui.common.color_utils import contrast_color
 
 BORDER_WIDTH = dp(1.1)
 BORDER_RADIUS = dp(10)
 ROW_HEIGHT = dp(70)
+UNCATEGORIZED_ROW_COLOR = [0.30, 0.45, 0.32, 1]     # Muted green; History's week rows use gray instead #
+
+## WHAT A ROW SHOWS FOR ONE TRANSACTION ##
+
+def row_data(index, entry):
+    # `index` is the transaction's place in the saved list, for opening it to edit #
+    category = entry.get("category")
+    return {
+        "timestamp_text": entry["timestamp"].strftime("%b %d, %I:%M %p"),
+        "category_text": category["name"] if category else "Uncategorized",
+        "amount_text": f"${entry['amount']:.2f}",
+        "note_text": entry.get("note") or "",
+        "index": index,
+        "category_color": category["color"] if category else UNCATEGORIZED_ROW_COLOR
+    }
 
 ## TRANSACTION ROW (TAP TO EDIT; SIDEWAYS SWIPES BELONG TO THE WEEK CAROUSEL) ##
 
@@ -20,7 +35,7 @@ class EntryRow(ButtonBehavior, FloatLayout):
     amount_text = StringProperty("")
     note_text = StringProperty("")
     index = NumericProperty(0)
-    category_color = ListProperty([0.30, 0.45, 0.32, 1])
+    category_color = ListProperty(UNCATEGORIZED_ROW_COLOR)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

@@ -1,5 +1,3 @@
-import json
-
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.button import Button
@@ -8,10 +6,10 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.widget import Widget
 from kivy.metrics import dp
 
-from ui.color_utils import contrast_color
-from ui.color_wheel_popup import ColorWheelPopup
-from ui.expanding_popup import ExpandingPopup
-from ui.text_box import TextBox
+from ui.common.color_utils import contrast_color
+from ui.custom.color_wheel_popup import ColorWheelPopup
+from ui.common.expanding_popup import ExpandingPopup
+from ui.inputs.text_box import TextBox
 
 PALETTE = [
     (0.9, 0.3, 0.3, 1),   # Red
@@ -163,9 +161,7 @@ class CategoryEditPopup(ExpandingPopup):
         # A color that's already a swatch is just picked; a new one is saved for every category to use #
         known = self._known_color(color)
         if known is None:
-            self.app.saved_colors.insert(0, list(color))
-            with open(self.app.colors_file, "w") as f:
-                json.dump(self.app.saved_colors, f)
+            self.app.save_colors([list(color)] + self.saved_colors)
             self._show_saved_colors()
             known = tuple(color)
         self._select_color(known)

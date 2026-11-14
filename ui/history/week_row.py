@@ -5,9 +5,9 @@ from kivy.graphics import Color, RoundedRectangle, Line
 from kivy.metrics import dp, sp
 
 from budget_periods import format_range
-from ui.carry_over_button import CarryOverButton
-from ui.color_utils import contrast_color
-from ui.entry_row import BORDER_WIDTH, BORDER_RADIUS
+from ui.history.carry_over_button import CarryOverButton
+from ui.common.color_utils import contrast_color
+from ui.transactions.entry_row import BORDER_WIDTH, BORDER_RADIUS
 
 UNCATEGORIZED_COLOR = (0.5, 0.5, 0.5, 1)    # Neutral gray; the main list's uncategorized green blends into the background
 EMPTY_COLOR = (1, 1, 1, 0.08)               # Faint fill for weeks with nothing spent
@@ -18,6 +18,31 @@ BAR_HEIGHT = dp(6)
 BAR_INSET = dp(12)
 PILL_WIDTH = 0.55      # Share of the row; the bar shortens to make room #
 PILL_GAP = dp(8)
+
+## ROW COLORS FOR ONE WEEK'S SUMMARY ##
+
+def row_colors(week):
+    # (fill, text color, border color, border width) #
+    # Fill shows the top category; over/under is shown by the bar, text and border instead #
+    status = week["status"]
+    top = week["top_category"]
+    over = week["left"] is not None and week["left"] < 0
+
+    if status == "upcoming":
+        fill, text_color, border_color = (0, 0, 0, 0), UPCOMING_TEXT_COLOR, (1, 1, 1, 0.35)
+    elif top is None:
+        fill, text_color, border_color = EMPTY_COLOR, (1, 1, 1, 1), (0, 0, 0, 1)
+    else:
+        fill = top["color"] or UNCATEGORIZED_COLOR
+        text_color, border_color = contrast_color(fill), (0, 0, 0, 1)
+
+    border_width = BORDER_WIDTH
+    if status == "current":
+        border_color, border_width = (1, 1, 1, 1), CURRENT_BORDER_WIDTH
+    if over:
+        border_width = OVER_BORDER_WIDTH
+
+    return fill, text_color, border_color, border_width
 
 class WeekRow(ButtonBehavior, FloatLayout):
     def __init__(self, week, number, on_carry_over=None, **kwargs):
@@ -32,22 +57,8 @@ class WeekRow(ButtonBehavior, FloatLayout):
         over = week["left"] is not None and week["left"] < 0
 
         ## STATE-DEPENDENT STYLING ##
-        # Fill shows the top category; over/under is shown by the bar, text and border instead #
 
-        if status == "upcoming":
-            fill, text_color, border_color = (0, 0, 0, 0), UPCOMING_TEXT_COLOR, (1, 1, 1, 0.35)
-        elif top is None:
-            fill, text_color, border_color = EMPTY_COLOR, (1, 1, 1, 1), (0, 0, 0, 1)
-        else:
-            fill = top["color"] or UNCATEGORIZED_COLOR
-            text_color, border_color = contrast_color(fill), (0, 0, 0, 1)
-
-        border_width = BORDER_WIDTH
-        if status == "current":
-            border_color, border_width = (1, 1, 1, 1), CURRENT_BORDER_WIDTH
-        if over:
-            border_width = OVER_BORDER_WIDTH
-
+        fill, text_color, border_color, border_width = row_colors(week)
         self.fill_color, self.text_color = fill, text_color
 
         with self.canvas.before:

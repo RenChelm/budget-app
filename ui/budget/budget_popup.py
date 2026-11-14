@@ -15,8 +15,8 @@ from budget_periods import (
     week_start,
     weekly_max_for,
 )
-from ui.choice_row import ChoiceRow
-from ui.number_input import NumberInput
+from ui.inputs.choice_row import ChoiceRow
+from ui.inputs.number_input import NumberInput
 
 MODE_LABELS = {"monthly": "Monthly", "weekly": "Weekly"}
 WEEKDAY_LABELS = {0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu", 4: "Fri", 5: "Sat", 6: "Sun"}
