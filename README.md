@@ -21,7 +21,7 @@ A mobile-friendly personal finance tracker built with **Python** and the **Kivy 
 - **Real-time Statistics**: See how much you've spent, how much is left under your weekly max (including anything added or subtracted from the week before), and how many transactions you've made in the week being viewed.
 - **Persistent Storage**: Data is saved locally to the device using Kivy's `user_data_dir`, ensuring records persist between sessions.
 - **Density-Independent Layout**: UI scales correctly across screen sizes and densities using Kivy's `dp()`/`sp()` units.
-- **Edge-to-Edge Display**: On Android 11 and newer, the app's colors run behind the status bar, camera and gesture bar, while its buttons and text stay clear of them. The gesture handle sits on a thin light gray bar, like the dividers, across the bottom.
+- **Edge-to-Edge Display**: On Android 11 and newer, the app's colors run behind the status bar, camera and gesture bar, while its buttons and text stay clear of them.
 - **Smooth Navigation**: Uses Kivy's `RecycleView` for efficient handling of long transaction histories.
 - **Dynamic Font Coloring**: Automatically applies contrasting font colors to categories depending on background luminance, improving text visibility.
 
