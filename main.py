@@ -19,8 +19,8 @@ from datetime import datetime
 
 from ui.transactions.add_transaction_popup import AddTransactionPopup
 from ui.transactions.edit_transaction_popup import EditTransactionPopup
-from ui.custom.custom_popup import CustomPopup
-from ui.custom.name_select_popup import NAME_KINDS
+from ui.identifiers.identifiers_popup import IdentifiersPopup
+from ui.identifiers.name_select_popup import NAME_KINDS
 from ui.transactions.sort_controls import SortControls
 from ui.buttons.menu_button import MenuButton
 from ui.history.history_screen import HistoryScreen
@@ -253,27 +253,27 @@ class BudgetApp(SavedData, App):
             on_release=self.open_transaction_window
         )
 
-        ## CUSTOM BUTTON (CATEGORIES, RETAILERS AND BRANDS) ##
+        ## IDENTIFIERS BUTTON (CATEGORIES, RETAILERS AND BRANDS) ##
 
-        btn_custom = RoundedButton(
-            text="Custom",
+        btn_identifiers = RoundedButton(
+            text="Identifiers",
             halign="center",
             valign="middle",
             fill_color=(0.51765, 0.878, 0.737, 1),
             color=(0, 0, 0, 1),
             size_hint=(1, None),
             height=dp(91),
-            on_release=lambda x: CustomPopup(self).open()
+            on_release=lambda x: IdentifiersPopup(self).open()
         )
 
         # Center text #
         btn_add.text_size = btn_add.size
         btn_add.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
-        btn_custom.text_size = btn_custom.size
-        btn_custom.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
+        btn_identifiers.text_size = btn_identifiers.size
+        btn_identifiers.bind(size=lambda inst, val: setattr(inst, "text_size", inst.size))
 
         btn_cluster.add_widget(btn_add)
-        btn_cluster.add_widget(btn_custom)
+        btn_cluster.add_widget(btn_identifiers)
         main.add_widget(btn_cluster)
 
         root.add_widget(main)

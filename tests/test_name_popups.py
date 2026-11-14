@@ -8,8 +8,8 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.modalview import ModalView
 
-from ui.custom.category_edit_popup import CategoryEditPopup, PALETTE
-from ui.custom.name_select_popup import (
+from ui.identifiers.category_edit_popup import CategoryEditPopup, PALETTE
+from ui.identifiers.name_select_popup import (
     NameSelectPopup, add_entry, edit_entry, find_entry, matching_entries, name_color,
 )
 from ui.inputs.text_box import TextBox
@@ -441,7 +441,7 @@ def test_the_name_box_stays_above_the_keyboard(tmp_path, kivy_window, monkeypatc
     add_popup.dismiss(animation=False)
 
 
-## MANAGING A LIST (OPENED FROM CUSTOM ON THE MAIN PAGE) ##
+## MANAGING A LIST (OPENED FROM IDENTIFIERS ON THE MAIN PAGE) ##
 
 def make_manager(app, kind="retailer"):
     return NameSelectPopup(app, kind)

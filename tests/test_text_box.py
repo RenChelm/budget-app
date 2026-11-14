@@ -59,8 +59,8 @@ def test_text_boxes_that_open_the_keyboard_all_use_text_box(tmp_path, kivy_windo
 
     from ui.transactions.add_transaction_popup import AddTransactionPopup
     from ui.transactions.edit_transaction_popup import EditTransactionPopup
-    from ui.custom.category_edit_popup import CategoryEditPopup
-    from ui.custom.name_select_popup import NameSelectPopup
+    from ui.identifiers.category_edit_popup import CategoryEditPopup
+    from ui.identifiers.name_select_popup import NameSelectPopup
     from ui.inputs.number_input import NumberInput
 
     app = SimpleNamespace(

@@ -6,7 +6,7 @@ from datetime import datetime
 
 from transactions import add_transaction
 from ui.transactions.advanced_section import AdvancedSection
-from ui.custom.category_select_popup import CategorySelectPopup
+from ui.identifiers.category_select_popup import CategorySelectPopup
 from ui.inputs.date_input import DateInput
 from ui.common.expanding_popup import ExpandingPopup
 from ui.inputs.number_input import NumberInput

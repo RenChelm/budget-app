@@ -8,15 +8,15 @@ from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 
-from ui.custom.category_select_popup import (
+from ui.identifiers.category_select_popup import (
     CategorySelectPopup,
     DEFAULT_CATEGORIES,
     add_category,
     delete_category,
     edit_category,
 )
-from ui.custom.category_edit_popup import CategoryEditPopup, PALETTE, _normalize
-from ui.custom.color_wheel_popup import ColorWheelPopup
+from ui.identifiers.category_edit_popup import CategoryEditPopup, PALETTE, _normalize
+from ui.identifiers.color_wheel_popup import ColorWheelPopup
 from ui.inputs.text_box import TextBox
 from storage import SavedData
 

@@ -444,7 +444,7 @@ def test_main_page_buttons_read_spending_history_and_budget(app):
 def test_main_page_buttons_stay_clear_of_the_screens_rounded_corners(app):
     from kivy.metrics import dp
 
-    labels = {"Spending\nHistory", "Budget", "Add", "Custom"}
+    labels = {"Spending\nHistory", "Budget", "Add", "Identifiers"}
     buttons = [w for w in _root_widget(app).walk() if getattr(w, "text", None) in labels]
     assert len(buttons) == 4
 

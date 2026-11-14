@@ -7,7 +7,7 @@ from kivy.uix.widget import Widget
 from kivy.metrics import dp
 
 from ui.common.color_utils import contrast_color
-from ui.custom.color_wheel_popup import ColorWheelPopup
+from ui.identifiers.color_wheel_popup import ColorWheelPopup
 from ui.common.expanding_popup import ExpandingPopup
 from ui.inputs.text_box import TextBox
 

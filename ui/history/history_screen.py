@@ -11,7 +11,7 @@ from budget_periods import format_money, format_period, history_periods
 from ui.common.back_screen import BackScreen
 from ui.history.carry_over_button import CarryOverButton
 from ui.common.page_carousel import PageCarousel
-from ui.custom.name_select_popup import name_color
+from ui.identifiers.name_select_popup import name_color
 from ui.history.spending_chart import CategoryChart, NameChart
 from ui.history.week_row import WeekRow
 

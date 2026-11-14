@@ -5,9 +5,9 @@ from kivy.uix.scrollview import ScrollView
 from kivy.metrics import dp
 
 from transactions import replace_category
-from ui.custom.category_edit_popup import CategoryEditPopup
+from ui.identifiers.category_edit_popup import CategoryEditPopup
 from ui.common.color_utils import contrast_color
-from ui.custom.name_select_popup import hint_label, search_box
+from ui.identifiers.name_select_popup import hint_label, search_box
 
 DEFAULT_CATEGORIES = [
     {"name": "Food",          "color": [1, 0.6, 0.2, 1]},

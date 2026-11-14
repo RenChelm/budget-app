@@ -50,7 +50,7 @@ def test_main_pages_four_buttons_are_rounded(tmp_path, kivy_window):
     app._user_data_dir = str(tmp_path)
     root = app.build()
 
-    labels = {"Spending\nHistory", "Budget", "Add", "Custom"}
+    labels = {"Spending\nHistory", "Budget", "Add", "Identifiers"}
     buttons = [w for w in root.walk() if getattr(w, "text", None) in labels]
     assert len(buttons) == 4
     assert all(isinstance(button, RoundedButton) for button in buttons)

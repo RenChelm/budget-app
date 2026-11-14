@@ -1,14 +1,14 @@
 from kivy.uix.boxlayout import BoxLayout
 from kivy.metrics import dp
 
-from ui.custom.category_select_popup import CategorySelectPopup
+from ui.identifiers.category_select_popup import CategorySelectPopup
 from ui.common.expanding_popup import ExpandingPopup
-from ui.custom.name_select_popup import NAME_KIND_PLURALS, NameSelectPopup
+from ui.identifiers.name_select_popup import NAME_KIND_PLURALS, NameSelectPopup
 from ui.buttons.rounded_button import RoundedButton
 
 ## PICKS WHICH OF THE USER'S OWN LISTS TO OPEN: CATEGORIES, RETAILERS OR BRANDS ##
 
-class CustomPopup(ExpandingPopup):
+class IdentifiersPopup(ExpandingPopup):
     def __init__(self, app, **kwargs):
         super().__init__(**kwargs)
         self.app = app
@@ -32,7 +32,7 @@ class CustomPopup(ExpandingPopup):
             self.buttons[key] = btn
             layout.add_widget(btn)
 
-        self.title = "Custom"
+        self.title = "Identifiers"
         self.title_color = (1, 1, 1, 1)
         self.content = layout
         self.size_hint_x = 0.8

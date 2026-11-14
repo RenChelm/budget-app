@@ -5,7 +5,7 @@ from kivy.uix.button import Button
 from kivy.uix.stencilview import StencilView
 from kivy.metrics import dp
 
-from ui.custom.name_select_popup import NAME_KINDS, NameSelectPopup, fit_text, name_color, show_color
+from ui.identifiers.name_select_popup import NAME_KINDS, NameSelectPopup, fit_text, name_color, show_color
 
 ROW_HEIGHT = dp(44)
 ROW_SPACING = dp(10)

@@ -9,7 +9,7 @@ from kivy.graphics import Color, Line, RoundedRectangle
 from kivy.metrics import dp, sp
 from kivy.utils import get_color_from_hex
 
-from ui.custom.name_select_popup import NAME_KINDS
+from ui.identifiers.name_select_popup import NAME_KINDS
 from ui.history.week_row import EMPTY_COLOR, UNCATEGORIZED_COLOR
 
 MAX_SLICES = 6                       # Past this, the smallest slices fold into one "Other" slice

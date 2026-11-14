@@ -8,7 +8,7 @@ from kivy.metrics import dp
 from kivy.tests.common import UnitTestTouch
 from kivy.uix.modalview import ModalView
 
-from ui.custom.color_wheel_popup import TEXTURE_SIZE, ColorWheelPopup, position_to_hue_saturation, wheel_pixels
+from ui.identifiers.color_wheel_popup import TEXTURE_SIZE, ColorWheelPopup, position_to_hue_saturation, wheel_pixels
 
 
 @pytest.fixture(autouse=True)

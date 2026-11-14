@@ -6,7 +6,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.metrics import dp
 
 from transactions import rename_in_transactions
-from ui.custom.category_edit_popup import CategoryEditPopup
+from ui.identifiers.category_edit_popup import CategoryEditPopup
 from ui.common.color_utils import contrast_color
 from ui.inputs.text_box import TextBox
 
@@ -63,7 +63,7 @@ class NameSelectPopup(Popup):
         self.on_select = on_select
         self.on_rename = on_rename
 
-        # Without `on_select` it only manages the list (opened from Custom on the main page) instead of picking from it #
+        # Without `on_select` it only manages the list (opened from Identifiers on the main page) instead of picking from it #
         self.picking = on_select is not None
 
         outer_layout = BoxLayout(orientation="vertical", padding=dp(10), spacing=dp(10))
